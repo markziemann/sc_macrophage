@@ -1,0 +1,641 @@
+---
+title: "Single cell transcriptomes of macrophages with HIV 2024 - data preparation"
+author: "Burnet Bioinformatics group"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 7
+theme: cosmo
+---
+
+## Introduction
+
+Description of the samples TODO.
+
+```{r,libs}
+
+suppressPackageStartupMessages({
+  library("plyr")
+  library("Seurat")
+  library("hdf5r")
+  library("SingleCellExperiment")
+  library("parallel")
+  library("stringi")
+  library("beeswarm")
+  library("muscat")
+  library("DESeq2")
+  library("mitch")
+})
+
+```
+
+## Load data
+
+Load the h5 matrices.
+
+CSP1_counts ./1-CSP/outs/filtered_feature_bc_matrix.h5
+
+GEX1_counts ./1-GEX/outs/filtered_feature_bc_matrix.h5
+
+CSP2_counts ./2-CSP/outs/filtered_feature_bc_matrix.h5
+
+GEX2_counts ./2-GEX/outs/filtered_feature_bc_matrix.h5
+
+M239_N239_Alv_counts ./M239-N239-Alv/outs/filtered_feature_bc_matrix.h5
+
+N239Alv_react ./N239Alv-react/outs/filtered_feature_bc_matrix.h5
+
+P239_Alv_and_MDM ./P239-Alv-and-MDM/outs/filtered_feature_bc_matrix.h5
+
+```{r,load1}
+
+CSP1_counts <- Read10X_h5("./1-CSP/outs/filtered_feature_bc_matrix.h5")
+colnames(CSP1_counts) <- gsub("-1","",colnames(CSP1_counts))
+dim(CSP1_counts)
+ncol(CSP1_counts)
+summary(colSums(CSP1_counts))
+CSP1_counts[1:10,1:30]
+
+GEX1_counts <- Read10X_h5("./1-GEX/outs/filtered_feature_bc_matrix.h5")
+colnames(GEX1_counts) <- gsub("-1","",colnames(GEX1_counts))
+ncol(GEX1_counts)
+summary(colSums(GEX1_counts))
+GEX1_counts[1:10,1:30]
+
+CSP2_counts <- Read10X_h5("./2-CSP/outs/filtered_feature_bc_matrix.h5")
+colnames(CSP2_counts) <- gsub("-1","",colnames(CSP2_counts))
+ncol(CSP2_counts)
+summary(colSums(CSP2_counts))
+CSP2_counts[1:10,1:30]
+
+GEX2_counts <- Read10X_h5("./2-GEX/outs/filtered_feature_bc_matrix.h5")
+colnames(GEX2_counts) <- gsub("-1","",colnames(GEX2_counts))
+ncol(GEX2_counts)
+summary(colSums(GEX2_counts))
+GEX2_counts[1:10,1:30]
+
+M239_N239_Alv_counts <- Read10X_h5("./M239-N239-Alv/outs/filtered_feature_bc_matrix.h5")
+colnames(M239_N239_Alv_counts) <- gsub("-1","",colnames(M239_N239_Alv_counts))
+ncol(M239_N239_Alv_counts)
+summary(colSums(M239_N239_Alv_counts))
+M239_N239_Alv_counts[1:10,1:30]
+
+N239Alv_react_counts <- Read10X_h5("./N239Alv-react/outs/filtered_feature_bc_matrix.h5")
+colnames(N239Alv_react_counts) <- gsub("-1","",colnames(N239Alv_react_counts))
+ncol(N239Alv_react_counts)
+summary(colSums(N239Alv_react_counts))
+N239Alv_react_counts[1:10,1:30]
+
+P239_Alv_MDM_counts <- Read10X_h5("./P239-Alv-and-MDM/outs/filtered_feature_bc_matrix.h5")
+colnames(P239_Alv_MDM_counts) <- gsub("-1","",colnames(P239_Alv_MDM_counts))
+ncol(P239_Alv_MDM_counts)
+summary(colSums(P239_Alv_MDM_counts))
+P239_Alv_MDM_counts[1:10,1:30]
+
+```
+
+CSP1_counts ./1-CSP/outs/filtered_feature_bc_matrix.h5
+
+GEX1_counts ./1-GEX/outs/filtered_feature_bc_matrix.h5
+
+CSP2_counts ./2-CSP/outs/filtered_feature_bc_matrix.h5
+
+GEX2_counts ./2-GEX/outs/filtered_feature_bc_matrix.h5
+
+M239_N239_Alv_counts ./M239-N239-Alv/outs/filtered_feature_bc_matrix.h5
+
+N239Alv_react_counts ./N239Alv-react/outs/filtered_feature_bc_matrix.h5
+
+P239_Alv_MDM_counts ./P239-Alv-and-MDM/outs/filtered_feature_bc_matrix.h5
+
+```{r,cellbarcodes}
+
+if (! file.exists("CSP1_cell_barcodes.txt") ) {
+  CSP1_bc <- colnames(CSP1_counts)
+  writeLines(CSP1_bc,con="CSP1_cell_barcodes.txt")
+}
+
+if (! file.exists("GEX1_cell_barcodes.txt") ) {
+  GEX1_bc <- colnames(GEX1_counts)
+  writeLines(GEX1_bc,con="GEX1_cell_barcodes.txt")
+}
+
+if (! file.exists("CSP2_cell_barcodes.txt") ) {
+  CSP2_bc <- colnames(CSP2_counts)
+  writeLines(CSP2_bc,con="CSP2_cell_barcodes.txt")
+}
+
+if (! file.exists("GEX2_cell_barcodes.txt") ) {
+  GEX2_bc <- colnames(GEX2_counts)
+  writeLines(GEX2_bc,con="GEX2_cell_barcodes.txt")
+}
+
+if (! file.exists("M239_N239_Alv_cell_barcodes.txt") ) {
+  M239_N239_Alv_bc <- colnames(M239_N239_Alv_counts)
+  writeLines(M239_N239_Alv_bc,con="M239_N239_Alv_cell_barcodes.txt")
+}
+
+if (! file.exists("N239Alv_react_cell_barcodes.txt") ) {
+  N239Alv_react_bc <- colnames(N239Alv_react_counts)
+  writeLines(N239Alv_react_bc,con="N239Alv_react_cell_barcodes.txt")
+}
+
+if (! file.exists("P239_Alv_and_MDM_cell_barcodes.txt") ) {
+  P239_Alv_and_MDM_bc <- colnames(P239_Alv_MDM_counts)
+  writeLines(P239_Alv_and_MDM_bc,con="P239_Alv_and_MDM_cell_barcodes.txt")
+}
+
+```
+
+Now read HTO data.
+
+```{r,htoread1}
+
+gex1_hto <- Read10X("1-CSP_hto/read_count/", gene.column=1)
+#gex1_hto_trash <- Read10X("trash/1-CSP_hto/read_count/", gene.column=1)
+summary(colSums(gex1_hto))
+dim(gex1_hto)
+
+gex2_hto <- Read10X("2-CSP_hto/read_count/", gene.column=1)
+summary(colSums(gex2_hto))
+dim(gex2_hto)
+
+M239_N239_Alv_hto <- Read10X("M239-N239-Alv_hto/read_count/", gene.column=1)
+summary(colSums(M239_N239_Alv_hto))
+dim(M239_N239_Alv_hto)
+
+P239_Alv_MDM_hto <- Read10X("P239-Alv-and-MDM_hto/read_count/", gene.column=1)
+summary(colSums(P239_Alv_MDM_hto))
+dim(P239_Alv_MDM_hto)
+
+str(which(colnames(GEX1_counts) %in% colnames(gex1_hto)))
+str(which(colnames(GEX2_counts) %in% colnames(gex2_hto)))
+str(which(colnames(M239_N239_Alv_counts) %in% colnames(M239_N239_Alv_hto)))
+str(which(colnames(P239_Alv_MDM_counts) %in% colnames(P239_Alv_MDM_hto)))
+
+```
+
+## Remove low HTO counts
+
+```{r,htofilt1}
+
+summary(colSums(gex1_hto))
+table(colSums(gex1_hto)>=100)
+gex1_hto <- gex1_hto[,which(colSums(gex1_hto)>=100)]
+summary(colSums(gex1_hto))
+
+summary(colSums(gex2_hto))
+table(colSums(gex2_hto)>=100)
+gex2_hto <- gex2_hto[,which(colSums(gex2_hto)>=100)]
+summary(colSums(gex2_hto))
+
+summary(colSums(M239_N239_Alv_hto))
+table(colSums(M239_N239_Alv_hto)>=100)
+M239_N239_Alv_hto <- M239_N239_Alv_hto[,which(colSums(M239_N239_Alv_hto)>=100)]
+summary(colSums(M239_N239_Alv_hto))
+
+summary(colSums(P239_Alv_MDM_hto))
+table(colSums(P239_Alv_MDM_hto)>=100)
+P239_Alv_MDM_hto <- P239_Alv_MDM_hto[,which(colSums(P239_Alv_MDM_hto)>=100)]
+summary(colSums(P239_Alv_MDM_hto))
+
+```
+
+## Look at the proportion unmapped
+
+```{r,htofilt2}
+
+summary(apply(gex1_hto,2,function(x) {x[6]/sum(x) } ) )
+summary(apply(gex2_hto,2,function(x) {x[6]/sum(x) } ) )
+summary(apply(M239_N239_Alv_hto,2,function(x) {x[6]/sum(x) } ) )
+summary(apply(P239_Alv_MDM_hto,2,function(x) {x[6]/sum(x) } ) )
+
+```
+
+## Identify ambiguous HTO counts
+
+For each cell barcode, calculate the ratio of top BC to 2nd BC.
+
+```{r,htodoublets1}
+
+getratio <- function(mx){
+  res <- lapply(1:ncol(mx), function(i) {
+    cnt <- mx[,i]
+    top1 <- cnt[order(-cnt)][1]+1
+    top2 <- cnt[order(-cnt)][2]+1
+    top1/top2
+  })
+  return(unlist(res))
+}
+
+gex1_hto_ratio <- getratio(gex1_hto)
+summary(unlist(gex1_hto_ratio))
+table(gex1_hto_ratio>3)
+gex1_hto <- gex1_hto[,which(gex1_hto_ratio>3)]
+
+gex2_hto_ratio <- getratio(gex2_hto)
+summary(unlist(gex2_hto_ratio))
+table(gex2_hto_ratio>3)
+gex2_hto <- gex2_hto[,which(gex2_hto_ratio>3)]
+
+M239_N239_Alv_hto_ratio <- getratio(M239_N239_Alv_hto)
+summary(unlist(M239_N239_Alv_hto_ratio))
+table(M239_N239_Alv_hto_ratio>3)
+M239_N239_Alv_hto <- M239_N239_Alv_hto[,which(M239_N239_Alv_hto_ratio>3)]
+
+P239_Alv_MDM_hto_ratio <- getratio(P239_Alv_MDM_hto)
+summary(unlist(P239_Alv_MDM_hto_ratio))
+table(P239_Alv_MDM_hto_ratio>3)
+P239_Alv_MDM_hto <- P239_Alv_MDM_hto[,which(P239_Alv_MDM_hto_ratio>3)]
+
+```
+
+## Match 
+
+```{r,match1}
+
+gex1_itx <- intersect(colnames(GEX1_counts),colnames(gex1_hto))
+dim(GEX1_counts)
+GEX1_counts <- GEX1_counts[,gex1_itx]
+dim(GEX1_counts)
+gex1_hto <- gex1_hto[,gex1_itx]
+dim(gex1_hto)
+
+gex2_itx <- intersect(colnames(GEX2_counts),colnames(gex2_hto))
+dim(GEX2_counts)
+GEX2_counts <- GEX2_counts[,gex2_itx]
+dim(GEX2_counts)
+gex2_hto <- gex2_hto[,gex2_itx]
+dim(gex2_hto)
+
+M239_N239_Alv_itx <- intersect(colnames(M239_N239_Alv_counts),colnames(M239_N239_Alv_hto))
+dim(M239_N239_Alv_counts)
+M239_N239_Alv_counts <- M239_N239_Alv_counts[,M239_N239_Alv_itx]
+dim(M239_N239_Alv_counts)
+M239_N239_Alv_hto <- M239_N239_Alv_hto[,M239_N239_Alv_itx]
+dim(M239_N239_Alv_hto)
+
+P239_Alv_MDM_itx <- intersect(colnames(P239_Alv_MDM_counts),colnames(P239_Alv_MDM_hto))
+dim(P239_Alv_MDM_counts)
+P239_Alv_MDM_counts <- P239_Alv_MDM_counts[,P239_Alv_MDM_itx]
+dim(P239_Alv_MDM_counts)
+P239_Alv_MDM_hto <- P239_Alv_MDM_hto[,P239_Alv_MDM_itx]
+dim(P239_Alv_MDM_hto)
+
+```
+
+## Get demux result
+
+Hash tagging sheet.
+
+| Library | HTO | Sample |
+| --- | --- | --- |
+| gex1 | 1 | mock (donor P and V) |
+| gex1 | 2 | gfp_neg (donor P and V) |
+| gex1 | 4 | gfp_pos (donor P and V) |
+| gex2 | 1 | mock donor O |
+| gex2 | 2 | gfp_neg donor O |
+| gex2 | 4 | gfp_pos donor O |
+| M239_N239_Alv | 1 | AlvM239_mock |
+| M239_N239_Alv | 2 | AlvM239_gfp_neg |
+| M239_N239_Alv | 3 | AlvM239_gfp_pos |
+| M239_N239_Alv | 4 | AlvN239_mock |
+| M239_N239_Alv | 5 | AlvN239_gfp_neg |
+| M239_N239_Alv | 6 | AlvN239_gfp_pos |
+| P239_Alv_MDM_hto | 1 | MDM_mock |
+| P239_Alv_MDM_hto | 2 | MDM_gfp_neg |
+| P239_Alv_MDM_hto | 3 | MDM_gfp_pos |
+| P239_Alv_MDM_hto | 4 | Alv_mock |
+| P239_Alv_MDM_hto | 5 | Alv_gfp_neg |
+| P239_Alv_MDM_hto | 6 | Alv_gfp_pos |
+
+
+Input counts:
+
+* GEX1_counts gex1_hto
+
+* GEX2_counts gex2_hto
+
+* M239_N239_Alv M239_N239_Alv_hto
+
+* P239_Alv_MDM P239_Alv_MDM_hto
+
+```{r,demuxresult1}
+
+table(apply(gex1_hto,2,function(x) { order(-x) } )[1,] )
+gex1_idx <- apply(gex1_hto,2,function(x) { order(-x) } )[1,]
+gex1_h1 <- GEX1_counts[,which(gex1_idx==1)] # mock (donor P and V)
+gex1_h2 <- GEX1_counts[,which(gex1_idx==2)] # gfp_neg (donor P and V) 
+gex1_h4 <- GEX1_counts[,which(gex1_idx==4)] # gfp_pos (donor P and V)
+
+table(apply(gex2_hto,2,function(x) { order(-x) } )[1,] )
+gex2_idx <- apply(gex2_hto,2,function(x) { order(-x) } )[1,]
+gex2_h1 <- GEX2_counts[,which(gex2_idx==1)] # mock donor O
+gex2_h2 <- GEX2_counts[,which(gex2_idx==2)] # gfp_neg donor O 
+gex2_h4 <- GEX2_counts[,which(gex2_idx==4)] # gfp_pos donor O
+
+table(apply(M239_N239_Alv_hto,2,function(x) { order(-x) } )[1,] )
+M239_N239_Alv_idx <- apply(M239_N239_Alv_hto,2,function(x) { order(-x) } )[1,]
+M239_N239_Alv_h1 <- M239_N239_Alv_counts[,which(M239_N239_Alv_idx==1)] # AlvM239_mock
+M239_N239_Alv_h2 <- M239_N239_Alv_counts[,which(M239_N239_Alv_idx==2)] # AlvM239_gfp_neg
+M239_N239_Alv_h3 <- M239_N239_Alv_counts[,which(M239_N239_Alv_idx==3)] # AlvM239_gfp_pos
+M239_N239_Alv_h4 <- M239_N239_Alv_counts[,which(M239_N239_Alv_idx==4)] # AlvN239_mock
+M239_N239_Alv_h5 <- M239_N239_Alv_counts[,which(M239_N239_Alv_idx==5)] # AlvN239_gfp_neg        
+M239_N239_Alv_h6 <- M239_N239_Alv_counts[,which(M239_N239_Alv_idx==6)] # AlvN239_gfp_pos     
+
+table(apply(P239_Alv_MDM_hto,2,function(x) { order(-x) } )[1,] )
+P239_Alv_MDM_idx <- apply(P239_Alv_MDM_hto,2,function(x) { order(-x) } )[1,]
+P239_Alv_MDM_h1 <- P239_Alv_MDM_counts[,which(P239_Alv_MDM_idx==1)] # MDM_mock
+P239_Alv_MDM_h2 <- P239_Alv_MDM_counts[,which(P239_Alv_MDM_idx==2)] # MDM_gfp_neg
+P239_Alv_MDM_h3 <- P239_Alv_MDM_counts[,which(P239_Alv_MDM_idx==3)] # MDM_gfp_pos
+P239_Alv_MDM_h4 <- P239_Alv_MDM_counts[,which(P239_Alv_MDM_idx==4)] # Alv_mock
+P239_Alv_MDM_h5 <- P239_Alv_MDM_counts[,which(P239_Alv_MDM_idx==5)] # Alv_gfp_neg
+P239_Alv_MDM_h6 <- P239_Alv_MDM_counts[,which(P239_Alv_MDM_idx==6)] # Alv_gfp_pos
+
+```
+
+## Distinguish SNP pooled samples
+
+Data was previously genotyped and called using cellSNP-lite and vireo.
+
+```{r,vireo}
+
+snp <- read.table("1-GEX_vireo/donor_ids.tsv",header=TRUE)
+
+donor0 <- subset(snp,donor_id=="donor0")$cell
+donor0 <- gsub("-1","",donor0)
+
+donor1 <- subset(snp,donor_id=="donor1")$cell
+donor1 <- gsub("-1","",donor1)
+
+gex1_h1_d0 <- gex1_h1[,colnames(gex1_h1) %in% donor0]
+dim(gex1_h1_d0)
+
+gex1_h1_d1 <- gex1_h1[,colnames(gex1_h1) %in% donor1]
+dim(gex1_h1_d1)
+
+gex1_h2_d0 <- gex1_h2[,colnames(gex1_h2) %in% donor0]
+dim(gex1_h2_d0)
+
+gex1_h2_d1 <- gex1_h2[,colnames(gex1_h2) %in% donor1]
+dim(gex1_h2_d1)
+
+gex1_h4_d0 <- gex1_h4[,colnames(gex1_h4) %in% donor0]
+dim(gex1_h4_d0)
+
+gex1_h4_d1 <- gex1_h4[,colnames(gex1_h4) %in% donor1]
+dim(gex1_h4_d1)
+
+```
+
+## Which is female or male?
+
+Let's look at the expression of genes on sex cheomosomes.
+
+BTW here's the bash script to get the chr2gene tsv file:
+
+```
+zcat genes.gtf.gz \
+| grep ^chr \
+| cut -f1,9 \
+| sed 's/; /\n/g' \
+| egrep  '(chr|gene_name)' \
+| sed 's/gene_name "//' \
+| tr -d '"' \
+| cut -f1 \
+| paste - - \
+| uniq \
+| sort -u > gene_chr.tsv
+```
+
+```{r,chromosomes1}
+
+gene_chr <- read.table("ref_combined1/hum_hiv/genes/gene_chr.tsv")
+head(gene_chr)
+
+chrx <- subset(gene_chr,V1=="chrX")$V2
+chry <- subset(gene_chr,V1=="chrY")$V2
+chrm <- subset(gene_chr,V1=="chrM")$V2
+chra <- gene_chr$V2[!gene_chr$V2 %in% c(chrx,chry,chrm)]
+str(gene_chr)
+str(chrx)
+str(chry)
+str(chrm)
+
+d0y <- median(colSums(gex1_h4_d0[which(rownames(gex1_h4_d0) %in% chry),]))
+d0x <- median(colSums(gex1_h4_d0[which(rownames(gex1_h4_d0) %in% chrx),]))
+d0m <- median(colSums(gex1_h4_d0[which(rownames(gex1_h4_d0) %in% chrm),]))
+d0a <- median(colSums(gex1_h4_d0[which(rownames(gex1_h4_d0) %in% chra),]))
+
+d1y <- median(colSums(gex1_h4_d1[which(rownames(gex1_h4_d1) %in% chry),]))
+d1x <- median(colSums(gex1_h4_d1[which(rownames(gex1_h4_d1) %in% chrx),]))
+d1m <- median(colSums(gex1_h4_d1[which(rownames(gex1_h4_d1) %in% chrm),]))
+d1a <- median(colSums(gex1_h4_d1[which(rownames(gex1_h4_d1) %in% chra),]))
+
+message(paste("Donor 0 chrY:",signif(d0y/d0a * 100,3),"%"))
+message(paste("Donor 0 chrX:",signif(d0x/d0a * 100,3),"%"))
+message(paste("Donor 0 chrM:",signif(d0m/d0a * 100,3),"%"))
+
+message(paste("Donor 1 chrY:",signif(d1y/d1a * 100,3),"%"))
+message(paste("Donor 1 chrX:",signif(d1x/d1a * 100,3),"%"))
+message(paste("Donor 1 chrM:",signif(d1m/d1a * 100,3),"%"))
+
+```
+
+Therefore donor 0 is female and 1 is male.
+
+## Check HIV in these
+
+```{r,checkhiv}
+
+hiv <- mean(colSums(gex1_h1_d0[1:2,])) / mean(colSums(gex1_h1_d0[3:nrow(gex1_h1_d0),]))
+message(paste("Mock Donor 0 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(gex1_h1_d1[1:2,])) / mean(colSums(gex1_h1_d1[3:nrow(gex1_h1_d1),]))
+message(paste("Mock Donor 1 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(gex1_h2_d0[1:2,])) / mean(colSums(gex1_h2_d0[3:nrow(gex1_h2_d0),]))
+message(paste("GFP- Donor 0 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(gex1_h2_d1[1:2,])) / mean(colSums(gex1_h2_d1[3:nrow(gex1_h2_d1),]))
+message(paste("GFP- Donor 1 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(gex1_h4_d0[1:2,])) / mean(colSums(gex1_h4_d0[3:nrow(gex1_h4_d0),]))
+message(paste("GFP+ Donor 0 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(gex1_h4_d1[1:2,])) / mean(colSums(gex1_h4_d1[3:nrow(gex1_h4_d1),]))
+message(paste("GFP+ Donor 1 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(gex2_h1[1:2,])) / mean(colSums(gex2_h1[3:nrow(gex2_h1),]))
+message(paste("Mock Donor 2 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(gex2_h2[1:2,])) / mean(colSums(gex2_h2[3:nrow(gex2_h2),]))
+message(paste("GFP- Donor 2 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(gex2_h4[1:2,])) / mean(colSums(gex2_h4[3:nrow(gex2_h4),]))
+message(paste("GFP+ Donor 2 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(P239_Alv_MDM_h1[1:2,])) / mean(colSums(P239_Alv_MDM_h1[3:nrow(P239_Alv_MDM_h1),]))
+message(paste("Mock Donor 3 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(P239_Alv_MDM_h2[1:2,])) / mean(colSums(P239_Alv_MDM_h2[3:nrow(P239_Alv_MDM_h2),]))
+message(paste("GFP+ Donor 3 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(P239_Alv_MDM_h3[1:2,])) / mean(colSums(P239_Alv_MDM_h3[3:nrow(P239_Alv_MDM_h3),]))
+message(paste("GPF- Donor 3 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(P239_Alv_MDM_h4[1:2,])) / mean(colSums(P239_Alv_MDM_h4[3:nrow(P239_Alv_MDM_h4),]))
+message(paste("Mock Donor 4 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(P239_Alv_MDM_h5[1:2,])) / mean(colSums(P239_Alv_MDM_h5[3:nrow(P239_Alv_MDM_h5),]))
+message(paste("GFP+ Donor 4 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(P239_Alv_MDM_h6[1:2,])) / mean(colSums(P239_Alv_MDM_h6[3:nrow(P239_Alv_MDM_h6),]))
+message(paste("GFP- Donor 4 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(M239_N239_Alv_h1[1:2,])) / mean(colSums(M239_N239_Alv_h1[3:nrow(M239_N239_Alv_h1),]))
+message(paste("Mock Donor 5 HIV:",signif(hiv,3),"%"))
+
+hiv <- mean(colSums(M239_N239_Alv_h2[1:2,])) / mean(colSums(M239_N239_Alv_h2[3:nrow(M239_N239_Alv_h2),]))
+message(paste("Mock Donor 5 HIV:",signif(hiv,3),"%"))
+
+```
+
+Yes it looks like GFP minus and positive were swapped
+
+## Renaming things
+
+From now on we will rename them: "mock", "latent", "active"
+
+```{r,rename1}
+
+mock0 <- gex1_h1_d0 #P - female
+mock1 <- gex1_h1_d1 #V - male
+mock2 <- gex2_h1 #O
+mock3 <- P239_Alv_MDM_h1 #MDM
+mock4 <- P239_Alv_MDM_h4 #Alv
+mock5 <- M239_N239_Alv_h1 #AlvM239
+mock6 <- M239_N239_Alv_h4 #AlvN239
+
+active0 <- gex1_h2_d0 #P
+active1 <- gex1_h2_d1 #V
+active2 <- gex2_h2 #O
+active3 <- P239_Alv_MDM_h2 #MDM
+active4 <- P239_Alv_MDM_h5 #Alv
+active5 <- M239_N239_Alv_h2 #AlvM239
+active6 <- M239_N239_Alv_h5 #AlvN239
+
+latent0 <- gex1_h4_d0 #PV
+latent1 <- gex1_h4_d1 #PV
+latent2 <- gex2_h4 #O
+latent3 <- P239_Alv_MDM_h3 #MDM
+latent4 <- P239_Alv_MDM_h6 #Alv
+latent5 <- M239_N239_Alv_h3 #AlvM239
+latent6 <- M239_N239_Alv_h6 #AlvN239
+
+react6 <- N239Alv_react_counts
+
+colnames(mock0) <- paste("mock0|",colnames(mock0),sep="")
+colnames(mock1) <- paste("mock1|",colnames(mock1),sep="")
+colnames(mock2) <- paste("mock2|",colnames(mock2),sep="")
+colnames(mock3) <- paste("mock3|",colnames(mock3),sep="")
+colnames(mock4) <- paste("mock4|",colnames(mock4),sep="")
+colnames(mock5) <- paste("mock5|",colnames(mock5),sep="")
+colnames(mock6) <- paste("mock6|",colnames(mock6),sep="")
+
+colnames(active0) <- paste("active0|",colnames(active0),sep="")
+colnames(active1) <- paste("active1|",colnames(active1),sep="")
+colnames(active2) <- paste("active2|",colnames(active2),sep="")
+colnames(active3) <- paste("active3|",colnames(active3),sep="")
+colnames(active4) <- paste("active4|",colnames(active4),sep="")
+colnames(active5) <- paste("active5|",colnames(active5),sep="")
+colnames(active6) <- paste("active6|",colnames(active6),sep="")
+
+colnames(latent0) <- paste("latent0|",colnames(latent0),sep="")
+colnames(latent1) <- paste("latent1|",colnames(latent1),sep="")
+colnames(latent2) <- paste("latent2|",colnames(latent2),sep="")
+colnames(latent3) <- paste("latent3|",colnames(latent3),sep="")
+colnames(latent4) <- paste("latent4|",colnames(latent4),sep="")
+colnames(latent5) <- paste("latent5|",colnames(latent5),sep="")
+colnames(latent6) <- paste("latent6|",colnames(latent6),sep="")
+
+colnames(react6) <- paste("react6|",colnames(react6),sep="")
+
+mylist <- list(mock0,mock1,mock2,mock3,mock4,mock5,mock6,
+  active0,active1,active2,active3,active4,active5,active6,
+  latent0,latent1,latent2,latent3,latent4,latent5,latent6,react6)
+
+names(mylist) <- c("mock0","mock1","mock2","mock3","mock4","mock5","mock6",
+  "active0","active1","active2","active3","active4","active5","active6",
+  "latent0","latent1","latent2","latent3","latent4","latent5","latent6","react6")
+
+comb <- do.call(cbind,mylist)
+
+rev(sapply(mylist,ncol))
+barplot(rev(sapply(mylist,ncol)),horiz=TRUE,las=1,xlab="no. cells")
+
+rev(sapply(mylist,function(mx) {sum(colSums(mx))}))
+barplot(rev(sapply(mylist,function(mx) {sum(colSums(mx))})),horiz=TRUE,las=1,xlab="no. counts")
+
+res <- rev(sapply(mylist,function(mx) {
+  mean(colSums(mx[1:2,])) /  mean(colSums(mx[3:nrow(mx),])) *100
+}))
+res
+barplot(rev(res),horiz=TRUE,las=1,xlab="% HIV reads")
+
+```
+
+## Analysis by chromosome
+
+```{r,chranalysis1}
+chrmx <- sapply(mylist,function(mx) {
+  rsum <- as.data.frame(rowSums(mx))
+  m <- merge(gene_chr,rsum,by.x="V2",by.y=0)
+  m$V2=NULL
+  ag <- aggregate(. ~ V1 , m , sum)
+  out <- ag[,2]
+  names(out) <- ag[,1]
+  return(out)
+})
+
+chryx <- chrmx["chrY",] / chrmx["chrX",] * 100
+chryx
+barplot(rev(chryx),horiz=TRUE,las=1,xlab="Ratio ChrY to ChrX x100")
+
+```
+
+These checks look consistent, except for the react6 which appears as more male but that is not consistent with
+mock6, active6 and latent6.
+
+```{r,chranalysis2}
+
+chrmt <- chrmx["chrM",] / colSums(chrmx[1:22,]) *100
+chrmt
+barplot(rev(chrmt),horiz=TRUE,las=1,xlab="% chrM reads")
+
+```
+
+## Save data object
+
+```{r,save}
+
+saveRDS(mylist,"macrophage_counts.rds")
+
+```
+
+## Session information
+
+For reproducibility.
+
+```{r,session}
+
+save.image("macrophage_dataprep.Rdata")
+
+
+sessionInfo()
+
+```
+
