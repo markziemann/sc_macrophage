@@ -510,67 +510,135 @@ Yes it looks like GFP minus and positive were swapped
 
 From now on we will rename them: "mock", "latent", "active"
 
+mock0 -> mdm_mock1
+mock1 -> mdm_mock2
+mock2 -> mdm_mock3
+mock3 -> mdm_mock4
+
+mock4 -> alv_mock1
+mock5 -> alv_mock3
+mock6 -> alv_mock4
+
+active0 -> mdm_active1
+active1 -> mdm_active2
+active2 -> mdm_active3
+active3 -> mdm_active4
+
+active4 -> alv_active1
+active5 -> alv_active2
+active6 -> alv_active3
+
+latent0 -> mdm_latent1
+latent1 -> mdm_latent2
+latent2 -> mdm_latent3
+
+latent3 -> alv_latent1
+latent4 -> alv_latent2
+latent5 -> alv_latent3
+latent6 -> alv_latent4
+
+bystander0 -> mdm_bystander1
+bystander1 -> mdm_bystander2
+bystander2 -> mdm_bystander3
+
+bystander3 -> alv_bystander1
+bystander4 -> alv_bystander2
+bystander5 -> alv_bystander3
+bystander6 -> alv_bystander4
+
 ```{r,rename1}
 
-mock0 <- gex1_h1_d0 #P - female
-mock1 <- gex1_h1_d1 #V - male
-mock2 <- gex2_h1 #O
-mock3 <- P239_Alv_MDM_h1 #MDM
-mock4 <- P239_Alv_MDM_h4 #Alv
-mock5 <- M239_N239_Alv_h1 #AlvM239
-mock6 <- M239_N239_Alv_h4 #AlvN239
+blah()
 
-active0 <- gex1_h2_d0 #P
-active1 <- gex1_h2_d1 #V
-active2 <- gex2_h2 #O
-active3 <- P239_Alv_MDM_h2 #MDM
-active4 <- P239_Alv_MDM_h5 #Alv
-active5 <- M239_N239_Alv_h2 #AlvM239
-active6 <- M239_N239_Alv_h5 #AlvN239
+mdm_mock1 <- gex1_h1_d0 #MDMP236 MDMmock
+mdm_mock2 <- gex1_h1_d1 #MDMV236 MDMmock
+mdm_mock3<- gex2_h1 #MDMO236 MDMmock
+mdm_mock4 <- P239_Alv_MDM_h1 #MDMP239 MDMmock
 
-latent0 <- gex1_h4_d0 #PV
-latent1 <- gex1_h4_d1 #PV
-latent2 <- gex2_h4 #O
-latent3 <- P239_Alv_MDM_h3 #MDM
-latent4 <- P239_Alv_MDM_h6 #Alv
-latent5 <- M239_N239_Alv_h3 #AlvM239
-latent6 <- M239_N239_Alv_h6 #AlvN239
+alv_mock1 <- P239_Alv_MDM_h4 #AlvP239 AlvMDMmock
+alv_mock2 <- M239_N239_Alv_h1 #AlvM239 AlvMDMmock
+alv_mock3 <- M239_N239_Alv_h4 #AlvN239 AlvMDMmock
 
-react6 <- N239Alv_react_counts
+mdm_active1 <- gex1_h2_d0 #MDMP236 MDMactive
+mdm_active2 <- gex1_h2_d1 #MDMV236 MDMactive
+mdm_active3 <- gex2_h2 #MDMO236 MDMactive
+mdm_active4 <- P239_Alv_MDM_h2 #MDMP239 MDMactive
 
-colnames(mock0) <- paste("mock0|",colnames(mock0),sep="")
-colnames(mock1) <- paste("mock1|",colnames(mock1),sep="")
-colnames(mock2) <- paste("mock2|",colnames(mock2),sep="")
-colnames(mock3) <- paste("mock3|",colnames(mock3),sep="")
-colnames(mock4) <- paste("mock4|",colnames(mock4),sep="")
-colnames(mock5) <- paste("mock5|",colnames(mock5),sep="")
-colnames(mock6) <- paste("mock6|",colnames(mock6),sep="")
+alv_active1 <- P239_Alv_MDM_h5 #AlvP239 AlvMDMactive
+alv_active2 <- M239_N239_Alv_h2 #AlvM239 AlvMDMactive
+alv_active3 <- M239_N239_Alv_h5 #AlvN239 AlvMDMactive
 
-colnames(active0) <- paste("active0|",colnames(active0),sep="")
-colnames(active1) <- paste("active1|",colnames(active1),sep="")
-colnames(active2) <- paste("active2|",colnames(active2),sep="")
-colnames(active3) <- paste("active3|",colnames(active3),sep="")
-colnames(active4) <- paste("active4|",colnames(active4),sep="")
-colnames(active5) <- paste("active5|",colnames(active5),sep="")
-colnames(active6) <- paste("active6|",colnames(active6),sep="")
+mdm_latent1 <- gex1_h4_d0[,which(colSums(gex1_h4_d0[1:2,])/colSums(gex1_h4_d0)*1e6>=10)] #MDMP236 latent
+mdm_bystander1 <- gex1_h4_d0[,which(colSums(gex1_h4_d0[1:2,])/colSums(gex1_h4_d0)*1e6<10)] #MDMP236 bystander
 
-colnames(latent0) <- paste("latent0|",colnames(latent0),sep="")
-colnames(latent1) <- paste("latent1|",colnames(latent1),sep="")
-colnames(latent2) <- paste("latent2|",colnames(latent2),sep="")
-colnames(latent3) <- paste("latent3|",colnames(latent3),sep="")
-colnames(latent4) <- paste("latent4|",colnames(latent4),sep="")
-colnames(latent5) <- paste("latent5|",colnames(latent5),sep="")
-colnames(latent6) <- paste("latent6|",colnames(latent6),sep="")
+mdm_latent2 <- gex1_h4_d1[,which(colSums(gex1_h4_d1[1:2,])/colSums(gex1_h4_d1)*1e6>=10)] #MDMV236 latent
+mdm_bystander2 <- gex1_h4_d1[,which(colSums(gex1_h4_d1[1:2,])/colSums(gex1_h4_d1)*1e6<10)] #MDMV236 bystander
+
+mdm_latent3 <- gex2_h4[,which(colSums(gex2_h4[1:2,])/colSums(gex2_h4)*1e6>=10)] #MDMO236 latent
+mdm_bystander3 <- gex2_h4[,which(colSums(gex2_h4[1:2,])/colSums(gex2_h4)*1e6<10)] #MDMO236 bystander
+
+alv_latent1 <- P239_Alv_MDM_h3[,which(colSums(P239_Alv_MDM_h3[1:2,])/colSums(P239_Alv_MDM_h3)*1e6>=10)] #MDMP239 latent
+alv_bystander1 <- P239_Alv_MDM_h3[,which(colSums(P239_Alv_MDM_h3[1:2,])/colSums(P239_Alv_MDM_h3)*1e6<10)] #MDMP239 bystander
+
+alv_latent2 <- P239_Alv_MDM_h6[,which(colSums(P239_Alv_MDM_h6[1:2,])/colSums(P239_Alv_MDM_h6)*1e6>=10)] #AlvP239 latent
+alv_bystander2 <- P239_Alv_MDM_h6[,which(colSums(P239_Alv_MDM_h6[1:2,])/colSums(P239_Alv_MDM_h6)*1e6<10)] #AlvP239 bystander
+
+alv_latent3 <- M239_N239_Alv_h3[,which(colSums(M239_N239_Alv_h3[1:2,])/colSums(M239_N239_Alv_h3)*1e6>=10)] #AlvM239 latent
+alv_bystander3 <- M239_N239_Alv_h3[,which(colSums(M239_N239_Alv_h3[1:2,])/colSums(M239_N239_Alv_h3)*1e6<10)] #AlvM239 bystander
+
+alv_latent4 <- M239_N239_Alv_h6[,which(colSums(M239_N239_Alv_h6[1:2,])/colSums(M239_N239_Alv_h6)*1e6>=10)] #AlvN239 latent
+alv_bystander4 <- M239_N239_Alv_h6[,which(colSums(M239_N239_Alv_h6[1:2,])/colSums(M239_N239_Alv_h6)*1e6<10)] #AlvN239 bystander
+
+react6 <- N239Alv_react_counts #AlvN239
+
+colnames(mdm_mock1) <- paste("mdm_mock1|",colnames(mdm_mock1),sep="")
+colnames(mdm_mock2) <- paste("mdm_mock2|",colnames(mdm_mock2),sep="")
+colnames(mdm_mock3) <- paste("mdm_mock3|",colnames(mdm_mock3),sep="")
+colnames(mdm_mock4) <- paste("mdm_mock4|",colnames(mdm_mock4),sep="")
+colnames(alv_mock1) <- paste("alv_mock1|",colnames(alv_mock1),sep="")
+colnames(alv_mock2) <- paste("alv_mock2|",colnames(alv_mock2),sep="")
+colnames(alv_mock3) <- paste("alv_mock3|",colnames(alv_mock3),sep="")
+
+colnames(mdm_active1) <- paste("mdm_active1|",colnames(mdm_active1),sep="")
+colnames(mdm_active2) <- paste("mdm_active2|",colnames(mdm_active2),sep="")
+colnames(mdm_active3) <- paste("mdm_active3|",colnames(mdm_active3),sep="")
+colnames(mdm_active4) <- paste("mdm_active4|",colnames(mdm_active4),sep="")
+
+colnames(alv_active1) <- paste("alv_active1|",colnames(alv_active1),sep="")
+colnames(alv_active2) <- paste("alv_active2|",colnames(alv_active2),sep="")
+colnames(alv_active3) <- paste("alv_active3|",colnames(alv_active3),sep="")
+
+colnames(mdm_bystander1) <- paste("mdm_bystander1|",colnames(mdm_bystander1),sep="")
+colnames(mdm_bystander2) <- paste("mdm_bystander2|",colnames(mdm_bystander2),sep="")
+colnames(mdm_bystander3) <- paste("mdm_bystander3|",colnames(mdm_bystander3),sep="")
+
+colnames(alv_bystander1) <- paste("alv_bystander1|",colnames(alv_bystander1),sep="")
+colnames(alv_bystander2) <- paste("alv_bystander2|",colnames(alv_bystander2),sep="")
+colnames(alv_bystander3) <- paste("alv_bystander3|",colnames(alv_bystander3),sep="")
+colnames(alv_bystander4) <- paste("alv_bystander4|",colnames(alv_bystander4),sep="")
+
+colnames(mdm_latent1) <- paste("mdm_latent1|",colnames(mdm_latent1),sep="")
+colnames(mdm_latent2) <- paste("mdm_latent2|",colnames(mdm_latent2),sep="")
+colnames(mdm_latent3) <- paste("mdm_latent3|",colnames(mdm_latent3),sep="")
+
+colnames(alv_latent1) <- paste("alv_latent1|",colnames(alv_latent1),sep="")
+colnames(alv_latent2) <- paste("alv_latent2|",colnames(alv_latent2),sep="")
+colnames(alv_latent3) <- paste("alv_latent3|",colnames(alv_latent3),sep="")
+colnames(alv_latent4) <- paste("alv_latent4|",colnames(alv_latent4),sep="")
 
 colnames(react6) <- paste("react6|",colnames(react6),sep="")
 
-mylist <- list(mock0,mock1,mock2,mock3,mock4,mock5,mock6,
-  active0,active1,active2,active3,active4,active5,active6,
-  latent0,latent1,latent2,latent3,latent4,latent5,latent6,react6)
+mylist <- list(mdm_mock1,mdm_mock2,mdm_mock3,mdm_mock4,alv_mock1,alv_mock2,alv_mock3,
+  mdm_active1,mdm_active2,mdm_active3,mdm_active4,alv_active1,alv_active2,alv_active3,
+  mdm_latent1,mdm_latent2,mdm_latent3,alv_latent1,alv_latent2,alv_latent3,alv_latent4,
+  mdm_bystander1,mdm_bystander2,mdm_bystander3,alv_bystander1,alv_bystander2,alv_bystander3,alv_bystander4,
+  react6)
 
-names(mylist) <- c("mock0","mock1","mock2","mock3","mock4","mock5","mock6",
-  "active0","active1","active2","active3","active4","active5","active6",
-  "latent0","latent1","latent2","latent3","latent4","latent5","latent6","react6")
+names(mylist) <- c("mdm_mock1","mdm_mock2","mdm_mock3","mdm_mock4","alv_mock1","alv_mock2","alv_mock3",
+  "mdm_active1","mdm_active2","mdm_active3","mdm_active4","alv_active1","alv_active2","alv_active3",
+  "mdm_latent1","mdm_latent2","mdm_latent3","alv_latent1","alv_latent2","mdm_latent3","alv_latent4",
+  "mdm_bystander1","mdm_bystander2","mdm_bystander3","alv_bystander1","alv_bystander2","alv_bystander3","alv_bystander4",
+  "react6")
 
 comb <- do.call(cbind,mylist)
 
@@ -591,6 +659,7 @@ barplot(rev(res),horiz=TRUE,las=1,xlab="% HIV reads")
 ## Analysis by chromosome
 
 ```{r,chranalysis1}
+
 chrmx <- sapply(mylist,function(mx) {
   rsum <- as.data.frame(rowSums(mx))
   m <- merge(gene_chr,rsum,by.x="V2",by.y=0)
@@ -617,6 +686,8 @@ chrmt
 barplot(rev(chrmt),horiz=TRUE,las=1,xlab="% chrM reads")
 
 ```
+
+## Partitioning bystander and latent
 
 ## Save data object
 
