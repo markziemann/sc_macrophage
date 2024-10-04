@@ -1,0 +1,1098 @@
+---
+title: "Single cell transcriptomes of macrophages with HIV 2024 - comparative analysis"
+author: "Burnet Bioinformatics group"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 7
+theme: cosmo
+---
+
+## Introduction
+
+Ee are interested in comparing DEGs between the following comparison groups:
+
+* Latently- vs productively-infected cells (groups 3 vs 4).
+
+* Latently-infected vs bystander cells (2 vs 3).
+
+* Productively-infected vs mock (4 vs 1)
+
+* Mock vs bystander (1 vs 2).
+
+As discussed, I think we will do these comparisons separately for both MDM and AlvMDM samples initially.
+Then, it would be of interest to compare DEGs for MDM vs AlvMDM for each of the four infection groups.
+
+```{r,libs}
+
+suppressPackageStartupMessages({
+  library("kableExtra")
+  library("ggplot2")
+  library("plyr")
+  library("Seurat")
+  library("hdf5r")
+  library("SingleCellExperiment")
+  library("parallel")
+  library("stringi")
+  library("beeswarm")
+  library("muscat")
+  library("DESeq2")
+  library("mitch")
+  library("harmony")
+  library("celldex")
+  library("SingleR")
+  library("limma")
+  library("gplots")
+})
+
+```
+
+## Load data
+
+| Sample | Patient | Group |
+| --- | --- | --- |
+| mock0 | MDMP236 | mock |
+| mock1 | MDMV236 | mock |
+| mock2 | MDMO236 | mock |
+| mock3 | MDMP239 | mock |
+| mock4 | AlvP239 | mock |
+| mock5 | AlvM239 | mock |
+| mock6 | AlvN239 | mock |
+| active0 | MDMP236 | active |
+| active1 | MDMV236 | active |
+| active2 | MDMO236 | active |
+| active3 | MDMP239 | active |
+| active4 | AlvP239 | active |
+| active5 | AlvM239 | active |
+| active6 | AlvN239 | active |
+| latent0 | MDMP236 | latent |
+| latent1 | MDMV236 | latent |
+| latent2 | MDMO236 | latent |
+| latent3 | MDMP239 | latent |
+| latent4 | AlvP239 | latent |
+| latent5 | AlvM239 | latent |
+| latent6 | AlvN239 | latent |
+| bystander0 | MDMP236 | bystander |
+| bystander1 | MDMV236 | bystander |
+| bystander2 | MDMO236 | bystander |
+| bystander3 | MDMP239 | bystander |
+| bystander4 | AlvP239 | bystander |
+| bystander5 | AlvM239 | bystander |
+| bystander6 | AlvN239 | bystander |
+| react6 | AlvN239 | reactivated |
+
+exclude react6
+
+```{r,load}
+
+ss <- read.table("samplesheet.tsv",header=TRUE,row.names=1)
+
+ss %>% kbl(caption="sample sheet") %>% kable_paper("hover", full_width = F)
+
+mylist <- readRDS("macrophage_counts.rds")
+
+```
+
+## Make single cell experiment object
+
+```{r,sce1}
+
+comb <- do.call(cbind,mylist)
+sce <- SingleCellExperiment(list(counts=comb))
+sce
+
+```
+
+## Normalise data
+
+```{r,norm1}
+
+cellmetadata <- data.frame(colnames(comb) ,sapply(strsplit(colnames(comb),"\\|"),"[[",1))
+colnames(cellmetadata) <- c("cell","sample")
+comb <- CreateSeuratObject(comb, project = "mac", assay = "RNA", meta.data = cellmetadata)
+comb <- NormalizeData(comb)
+comb <- FindVariableFeatures(comb, selection.method = "vst", nfeatures = 2000)
+comb <- ScaleData(comb)
+
+```
+
+## PCA and Cluster
+
+```{r,pca1}
+
+comb <- RunPCA(comb, features = VariableFeatures(object = comb))
+comb <- RunHarmony(comb,"sample")
+
+DimHeatmap(comb, dims = 1:6, cells = 500, balanced = TRUE)
+
+ElbowPlot(comb)
+comb <- JackStraw(comb, num.replicate = 100)
+comb <- FindNeighbors(comb, dims = 1:10)
+comb <- FindClusters(comb, resolution = 0.5)
+
+```
+
+## UMAP
+
+```{r,umap}
+
+comb <- RunUMAP(comb, dims = 1:10)
+DimPlot(comb, reduction = "umap")
+
+```
+
+## Assign names to clusters
+
+ADGRE1, CCR2, CD169, CX3CR1, CD206, CD163, LYVE1, CD9, TREM2
+
+HLA-DP, HLA-DM, HLA-DOA, HLA-DOB, HLA-DQ, and HLA-DR.
+
+```{r,assignclusters}
+
+message("macrophage markers")
+FeaturePlot(comb, features = c("ADGRE1", "CCR2", "SIGLEC1", "CX3CR1", "MRC1", "CD163", "LYVE1", "CD9", "TREM2"))
+
+DimPlot(comb, reduction = "umap", label = TRUE, pt.size = 0.5) + NoLegend()
+
+```
+
+That's pretty useless.
+Let's use celldex pkg to annotate cells and get the macs.
+
+
+```{r,cellidents}
+
+ref <- celldex::MonacoImmuneData()
+
+DefaultAssay(comb) <- "RNA"
+comb2 <- as.SingleCellExperiment(comb)
+
+lc <- logcounts(comb2)
+
+pred_imm_broad <- SingleR(test=comb2, ref=ref,
+                          labels=ref$label.main)
+
+head(pred_imm_broad)
+table(pred_imm_broad$pruned.labels)
+
+cellmetadata$label <- pred_imm_broad$pruned.labels
+
+pred_imm_fine <- SingleR(test=comb2, ref=ref,
+                          labels=ref$label.fine)
+head(pred_imm_fine)
+table(pred_imm_fine$pruned.labels)
+
+cellmetadata$finelabel <- pred_imm_fine$pruned.labels
+
+col_pal <- c('#e31a1c', '#ff7f00', "#999900", '#cc00ff', '#1f78b4', '#fdbf6f',
+             '#33a02c', '#fb9a99', "#a6cee3", "#cc6699", "#b2df8a", "#99004d", "#66ff99",
+             "#669999", "#006600", "#9966ff", "#cc9900", "#e6ccff", "#3399ff", "#ff66cc",
+             "#ffcc66", "#003399")
+
+annot_df <- data.frame(
+  barcodes = rownames(pred_imm_broad),
+  monaco_broad_annotation = pred_imm_broad$labels,
+  monaco_broad_pruned_labels = pred_imm_broad$pruned.labels,
+  monaco_fine_annotation = pred_imm_fine$labels,
+  monaco_fine_pruned_labels = pred_imm_fine$pruned.labels
+)
+
+meta_inf <- comb@meta.data
+meta_inf$cell_barcode <- colnames(comb)
+
+meta_inf <- meta_inf %>% dplyr::left_join(y = annot_df,
+                                          by = c("cell_barcode" = "barcodes"))
+rownames(meta_inf) <- colnames(lc)
+
+comb@meta.data <- meta_inf
+
+DimPlot(comb, label=TRUE, group.by = "monaco_broad_annotation", reduction = "umap",
+  cols = col_pal, pt.size = 0.5) + ggtitle("Annotation With the Monaco Reference Database")
+
+DimPlot(comb, label=TRUE, group.by = "monaco_fine_annotation", reduction = "umap",
+  cols = col_pal, pt.size = 0.5) + ggtitle("Annotation With the Monaco Reference Database")
+
+```
+
+## Make MDM object
+
+```{r,sce_mdm}
+
+mdmlist <- mylist[grep("mdm",names(mylist))]
+comb1 <- do.call(cbind,mdmlist)
+sce1 <- SingleCellExperiment(list(counts=comb1))
+sce1
+cellmetadata1 <- data.frame(colnames(comb1) ,sapply(strsplit(colnames(comb1),"\\|"),"[[",1))
+colnames(cellmetadata1) <- c("cell","sample")
+comb1 <- CreateSeuratObject(comb1, project = "mac", assay = "RNA", meta.data = cellmetadata1)
+comb1 <- NormalizeData(comb1)
+comb1 <- FindVariableFeatures(comb1, selection.method = "vst", nfeatures = 2000)
+comb1 <- ScaleData(comb1)
+comb1 <- RunPCA(comb1, features = VariableFeatures(object = comb1))
+comb1 <- RunHarmony(comb1,"sample")
+DimHeatmap(comb1, dims = 1:6, cells = 500, balanced = TRUE)
+ElbowPlot(comb1)
+comb1 <- JackStraw(comb1, num.replicate = 100)
+comb1 <- FindNeighbors(comb1, dims = 1:10)
+comb1 <- FindClusters(comb1, resolution = 0.5)
+comb1 <- RunUMAP(comb1, dims = 1:10)
+DimPlot(comb1, reduction = "umap")
+message("macrophage markers")
+FeaturePlot(comb1, features = c("ADGRE1", "CCR2", "SIGLEC1", "CX3CR1", "MRC1", "CD163", "LYVE1", "CD9", "TREM2"))
+DimPlot(comb1, reduction = "umap", label = TRUE, pt.size = 0.5) + NoLegend()
+ref <- celldex::MonacoImmuneData()
+DefaultAssay(comb1) <- "RNA"
+comb21 <- as.SingleCellExperiment(comb1)
+lc1 <- logcounts(comb21)
+pred_imm_broad1 <- SingleR(test=comb21, ref=ref,labels=ref$label.main)
+head(pred_imm_broad1)
+table(pred_imm_broad1$pruned.labels)
+cellmetadata1$label <- pred_imm_broad1$pruned.labels
+pred_imm_fine1 <- SingleR(test=comb21, ref=ref, labels=ref$label.fine)
+head(pred_imm_fine1)
+table(pred_imm_fine1$pruned.labels)
+cellmetadata1$finelabel <- pred_imm_fine1$pruned.labels
+col_pal <- c('#e31a1c', '#ff7f00', "#999900", '#cc00ff', '#1f78b4', '#fdbf6f',
+             '#33a02c', '#fb9a99', "#a6cee3", "#cc6699", "#b2df8a", "#99004d", "#66ff99",
+             "#669999", "#006600", "#9966ff", "#cc9900", "#e6ccff", "#3399ff", "#ff66cc",
+             "#ffcc66", "#003399")
+annot_df1 <- data.frame(
+  barcodes = rownames(pred_imm_broad1),
+  monaco_broad_annotation = pred_imm_broad1$labels,
+  monaco_broad_pruned_labels = pred_imm_broad1$pruned.labels,
+  monaco_fine_annotation = pred_imm_fine1$labels,
+  monaco_fine_pruned_labels = pred_imm_fine1$pruned.labels)
+
+meta_inf1 <- comb1@meta.data
+meta_inf1$cell_barcode <- colnames(comb1)
+meta_inf1 <- meta_inf1 %>% dplyr::left_join(y = annot_df1, by = c("cell_barcode" = "barcodes"))
+rownames(meta_inf1) <- colnames(lc1)
+comb1@meta.data <- meta_inf1
+DimPlot(comb1, label=TRUE, group.by = "monaco_broad_annotation", reduction = "umap",
+  cols = col_pal, pt.size = 0.5) + ggtitle("Annotation With the Monaco Reference Database")
+DimPlot(comb1, label=TRUE, group.by = "monaco_fine_annotation", reduction = "umap",
+  cols = col_pal, pt.size = 0.5) + ggtitle("Annotation With the Monaco Reference Database")
+
+message("extract mono")
+mono <- comb1[,which(meta_inf1$monaco_broad_annotation == "Monocytes")]
+mono_metainf1 <- meta_inf1[which(meta_inf1$monaco_broad_annotation == "Monocytes"),]
+mono_metainf1 <- mono_metainf1[grep("monocytes",mono_metainf1$monaco_fine_pruned_labels),]
+mono <- mono[,which(colnames(mono) %in% rownames(mono_metainf1))]
+mono <- FindVariableFeatures(mono, selection.method = "vst", nfeatures = 2000)
+mono <- RunPCA(mono, features = VariableFeatures(object = mono))
+DimHeatmap(mono, dims = 1:2, cells = 500, balanced = TRUE)
+DimHeatmap(mono, dims = 3:4, cells = 500, balanced = TRUE)
+ElbowPlot(mono)
+mono <- FindNeighbors(mono, dims = 1:4)
+mono <- FindClusters(mono, algorithm = 3, resolution = 0.3, verbose = FALSE)
+mono <- RunUMAP(mono, dims = 1:4)
+DimPlot(mono, reduction = "umap", label=TRUE)
+DimPlot(mono, group.by="monaco_fine_annotation" , reduction = "umap", label=TRUE)
+DimPlot(mono, group.by="sample" , reduction = "umap", label=TRUE)
+
+```
+
+## Make Alv object
+
+```{r,sce_alv}
+
+alvlist <- mylist[grep("alv",names(mylist))]
+
+comb1 <- do.call(cbind,alvlist)
+sce1 <- SingleCellExperiment(list(counts=comb1))
+sce1
+cellmetadata1 <- data.frame(colnames(comb1) ,sapply(strsplit(colnames(comb1),"\\|"),"[[",1))
+colnames(cellmetadata1) <- c("cell","sample")
+comb1 <- CreateSeuratObject(comb1, project = "mac", assay = "RNA", meta.data = cellmetadata1)
+comb1 <- NormalizeData(comb1)
+comb1 <- FindVariableFeatures(comb1, selection.method = "vst", nfeatures = 2000)
+comb1 <- ScaleData(comb1)
+comb1 <- RunPCA(comb1, features = VariableFeatures(object = comb1))
+comb1 <- RunHarmony(comb1,"sample")
+DimHeatmap(comb1, dims = 1:6, cells = 500, balanced = TRUE)
+ElbowPlot(comb1)
+comb1 <- JackStraw(comb1, num.replicate = 100)
+comb1 <- FindNeighbors(comb1, dims = 1:10)
+comb1 <- FindClusters(comb1, resolution = 0.5)
+comb1 <- RunUMAP(comb1, dims = 1:10)
+DimPlot(comb1, reduction = "umap")
+message("macrophage markers")
+FeaturePlot(comb1, features = c("ADGRE1", "CCR2", "SIGLEC1", "CX3CR1", "MRC1", "CD163", "LYVE1", "CD9", "TREM2"))
+DimPlot(comb1, reduction = "umap", label = TRUE, pt.size = 0.5) + NoLegend()
+ref <- celldex::MonacoImmuneData()
+DefaultAssay(comb1) <- "RNA"
+comb21 <- as.SingleCellExperiment(comb1)
+lc1 <- logcounts(comb21)
+pred_imm_broad1 <- SingleR(test=comb21, ref=ref,labels=ref$label.main)
+head(pred_imm_broad1)
+table(pred_imm_broad1$pruned.labels)
+cellmetadata1$label <- pred_imm_broad1$pruned.labels
+pred_imm_fine1 <- SingleR(test=comb21, ref=ref, labels=ref$label.fine)
+head(pred_imm_fine1)
+table(pred_imm_fine1$pruned.labels)
+cellmetadata1$finelabel <- pred_imm_fine1$pruned.labels
+col_pal <- c('#e31a1c', '#ff7f00', "#999900", '#cc00ff', '#1f78b4', '#fdbf6f',
+             '#33a02c', '#fb9a99', "#a6cee3", "#cc6699", "#b2df8a", "#99004d", "#66ff99",
+             "#669999", "#006600", "#9966ff", "#cc9900", "#e6ccff", "#3399ff", "#ff66cc",
+             "#ffcc66", "#003399")
+annot_df1 <- data.frame(
+  barcodes = rownames(pred_imm_broad1),
+  monaco_broad_annotation = pred_imm_broad1$labels,
+  monaco_broad_pruned_labels = pred_imm_broad1$pruned.labels,
+  monaco_fine_annotation = pred_imm_fine1$labels,
+  monaco_fine_pruned_labels = pred_imm_fine1$pruned.labels)
+
+meta_inf1 <- comb1@meta.data
+meta_inf1$cell_barcode <- colnames(comb1)
+meta_inf1 <- meta_inf1 %>% dplyr::left_join(y = annot_df1, by = c("cell_barcode" = "barcodes"))
+rownames(meta_inf1) <- colnames(lc1)
+comb1@meta.data <- meta_inf1
+DimPlot(comb1, label=TRUE, group.by = "monaco_broad_annotation", reduction = "umap",
+  cols = col_pal, pt.size = 0.5) + ggtitle("Annotation With the Monaco Reference Database")
+DimPlot(comb1, label=TRUE, group.by = "monaco_fine_annotation", reduction = "umap",
+  cols = col_pal, pt.size = 0.5) + ggtitle("Annotation With the Monaco Reference Database")
+
+message("extract mono")
+mono <- comb1[,which(meta_inf1$monaco_broad_annotation == "Monocytes")]
+mono_metainf1 <- meta_inf1[which(meta_inf1$monaco_broad_annotation == "Monocytes"),]
+mono_metainf1 <- mono_metainf1[grep("monocytes",mono_metainf1$monaco_fine_pruned_labels),]
+mono <- mono[,which(colnames(mono) %in% rownames(mono_metainf1))]
+mono <- FindVariableFeatures(mono, selection.method = "vst", nfeatures = 2000)
+mono <- RunPCA(mono, features = VariableFeatures(object = mono))
+DimHeatmap(mono, dims = 1:2, cells = 500, balanced = TRUE)
+DimHeatmap(mono, dims = 3:4, cells = 500, balanced = TRUE)
+ElbowPlot(mono)
+mono <- FindNeighbors(mono, dims = 1:4)
+mono <- FindClusters(mono, algorithm = 3, resolution = 0.3, verbose = FALSE)
+mono <- RunUMAP(mono, dims = 1:4)
+DimPlot(mono, reduction = "umap", label=TRUE)
+DimPlot(mono, group.by="monaco_fine_annotation" , reduction = "umap", label=TRUE)
+DimPlot(mono, group.by="sample" , reduction = "umap", label=TRUE)
+
+```
+
+## Extract monocytes MDM only
+
+```{r,extract}
+
+mono <- comb[,which(meta_inf$monaco_broad_annotation == "Monocytes")]
+mono_metainf <- meta_inf[which(meta_inf$monaco_broad_annotation == "Monocytes"),]
+mono_metainf1 <- mono_metainf[grep("monocytes",mono_metainf$monaco_fine_pruned_labels),]
+mono <- mono[,which(colnames(mono) %in% rownames(mono_metainf))]
+mono <- FindVariableFeatures(mono, selection.method = "vst", nfeatures = 2000)
+mono <- RunPCA(mono, features = VariableFeatures(object = mono))
+DimHeatmap(mono, dims = 1:2, cells = 500, balanced = TRUE)
+DimHeatmap(mono, dims = 3:4, cells = 500, balanced = TRUE)
+ElbowPlot(mono)
+mono <- FindNeighbors(mono, dims = 1:4)
+mono <- FindClusters(mono, algorithm = 3, resolution = 0.3, verbose = FALSE)
+mono <- RunUMAP(mono, dims = 1:4)
+DimPlot(mono, reduction = "umap", label=TRUE)
+DimPlot(mono, group.by="monaco_fine_annotation" , reduction = "umap", label=TRUE)
+DimPlot(mono, group.by="sample" , reduction = "umap", label=TRUE)
+
+```
+
+## Cell counts
+
+Most cells are classified as monocytes.
+
+```{r,count1}
+
+cc <- table(meta_inf[,c("sample","monaco_broad_annotation")])
+
+cc %>% kbl(caption="cell counts") %>% kable_paper("hover", full_width = F)
+
+tcc <- t(cc)
+
+pctcc <- apply(tcc,2,function(x) { x/sum(x)*100} )
+
+pctcc %>% kbl(caption="cell proportions") %>% kable_paper("hover", full_width = F)
+
+```
+
+## Differential expression
+
+We are going to use muscat for pseudobulk analysis.
+First need to convert seurat obj to singlecellexperiment object.
+Then summarise counts to pseudobulk level.
+
+```{r,pb}
+
+sce <- Seurat::as.SingleCellExperiment(comb, assay = "RNA")
+
+head(colData(sce),2)
+
+colnames(colData(sce))
+
+#muscat library
+pb <- aggregateData(sce,
+    assay = "counts", fun = "sum",
+    by = c("monaco_broad_annotation", "sample"))
+
+# one sheet per subpopulation
+assayNames(pb)
+
+t(head(assay(pb)))
+
+plotMDS(assays(pb)[[3]], main="Monocytes" )
+
+par(mfrow=c(2,3))
+
+dump <- lapply(1:length(assays(pb)) , function(i) {
+  cellname=names(assays(pb))[i]
+  plotMDS(assays(pb)[[i]],cex=1,pch=19,main=paste(cellname),labels=colnames(assays(pb)[[1]]))
+})
+
+par(mfrow=c(1,1))
+
+```
+
+## DE Prep
+
+```{r,prep1}
+
+pbmono <- assays(pb)[["Monocytes"]]
+
+head(pbmono)
+
+dim(pbmono)
+
+hiv <- pbmono[1:2,]
+pbmono <- pbmono[3:nrow(pbmono),]
+
+```
+
+## Gene sets
+
+Gene ontology.
+
+```{r,go1}
+
+go <- gmt_import("c5.go.v2023.2.Hs.symbols.gmt")
+names(go) <- gsub("_"," ",names(go))
+
+```
+
+## DE1 Latently- vs productively-infected cells (groups 3 vs 4).
+
+MDM group.
+
+```{r,de1m}
+
+pbmdm <- pbmono[,grep("mdm",colnames(pbmono))]
+
+pb1m <- pbmdm[,c(grep("active",colnames(pbmdm)),grep("latent",colnames(pbmdm)))]
+
+head(pb1m)
+pb1mf <- pb1m[which(rowMeans(pb1m)>=10),]
+head(pb1mf)
+colSums(pb1mf)
+
+des1m <- as.data.frame(grepl("active",colnames(pb1mf)))
+colnames(des1m) <- "case"
+
+dds <- DESeqDataSetFromMatrix(countData = pb1mf , colData = des1m, design = ~ case)
+
+res <- DESeq(dds)
+z <- results(res)
+vsd <- vst(dds, blind=FALSE)
+zz <- cbind(as.data.frame(z),assay(vsd))
+de <- as.data.frame(zz[order(zz$pvalue),])
+de1mf <- de
+write.table(de1mf,"de1mf.tsv",sep="\t")
+
+nrow(subset(de1mf,padj<0.05 & log2FoldChange>0))
+nrow(subset(de1mf,padj<0.05 & log2FoldChange<0))
+
+head(subset(de1mf,padj<0.05 & log2FoldChange>0),10)[,1:6] %>%
+  kbl(caption="Top upregulated genes in active MDM cells") %>%
+  kable_paper("hover", full_width = F)
+
+head(subset(de1mf,padj<0.05 & log2FoldChange<0),10)[,1:6] %>%
+  kbl(caption="Top downregulated genes in active MDM cells") %>%
+  kable_paper("hover", full_width = F)
+
+m1m <- mitch_import(de,DEtype="deseq2",joinType="full")
+mres1m <- mitch_calc(m1m,genesets=go,minsetsize=5,cores=4,priority="effect")
+res <- mres1m$enrichment_result
+res <- subset(res,p.adjustANOVA<0.05)
+resup <- subset(res,s.dist>0)
+resdn <- subset(res,s.dist<0)
+s <- c(head(resup$s.dist,10), head(resdn$s.dist,10))
+names(s) <- c(head(resup$set,10),head(resdn$set,10))
+s <- s[order(s)]
+cols <- gsub("1","red",gsub("-1","blue",as.character(sign(s))))
+par(mar=c(5,27,3,1))
+barplot(abs(s),las=1,horiz=TRUE,col=cols,xlab="ES",cex.names=0.8,main="")
+if (! file.exists("MDM_latent_vs_active.html") ) {
+  mitch_report(mres1m,outfile="MDM_latent_vs_active.html")
+}
+
+```
+
+Alv cells.
+
+```{r,de1alv}
+
+pbalv <- pbmono[,grep("alv",colnames(pbmono))]
+
+pb1a <- pbalv[,c(grep("active",colnames(pbalv)),grep("latent",colnames(pbalv)))]
+head(pb1a)
+pb1af <- pb1a[which(rowMeans(pb1a)>=10),]
+head(pb1af)
+colSums(pb1af)
+
+des1a <- as.data.frame(grepl("active",colnames(pb1af)))
+colnames(des1a) <- "case"
+
+dds <- DESeqDataSetFromMatrix(countData = pb1af , colData = des1a, design = ~ case)
+
+res <- DESeq(dds)
+z <- results(res)
+vsd <- vst(dds, blind=FALSE)
+zz <- cbind(as.data.frame(z),assay(vsd))
+de <- as.data.frame(zz[order(zz$pvalue),])
+de1af <- de
+write.table(de1af,"de1af.tsv",sep="\t")
+
+nrow(subset(de1af,padj<0.05 & log2FoldChange>0))
+nrow(subset(de1af,padj<0.05 & log2FoldChange<0))
+
+head(subset(de1af,padj<0.05 & log2FoldChange>0),10)[,1:6] %>%
+  kbl(caption="Top upregulated genes in active Alv cells") %>%
+  kable_paper("hover", full_width = F)
+
+head(subset(de1af,padj<0.05 & log2FoldChange<0),10)[,1:6] %>%
+  kbl(caption="Top upregulated genes in active Alv cells") %>%
+  kable_paper("hover", full_width = F)
+
+m1a <- mitch_import(de,DEtype="deseq2",joinType="full")
+mres1a <- mitch_calc(m1a,genesets=go,minsetsize=5,cores=4,priority="effect")
+res <- mres1a$enrichment_result
+res <- subset(res,p.adjustANOVA<0.05)
+resup <- subset(res,s.dist>0)
+resdn <- subset(res,s.dist<0)
+s <- c(head(resup$s.dist,10), head(resdn$s.dist,10))
+names(s) <- c(head(resup$set,10),head(resdn$set,10))
+s <- s[order(s)]
+cols <- gsub("1","red",gsub("-1","blue",as.character(sign(s))))
+par(mar=c(5,27,3,1))
+barplot(abs(s),las=1,horiz=TRUE,col=cols,xlab="ES",cex.names=0.8,main="")
+if (! file.exists("Alv_latent_vs_active.html") ) {
+  mitch_report(mres1a,outfile="Alv_latent_vs_active.html")
+}
+
+```
+
+Combined.
+
+```{r,de1am}
+
+mm1 <- merge(m1a,m1m,by=0)
+
+head(mm1)
+rownames(mm1) <- mm1[,1]
+mm1[,1]=NULL
+colnames(mm1) <- c("Alv","MDM")
+plot(mm1)
+mylm <- lm(mm1)
+abline(mylm,col="red",lty=2,lwd=3)
+summary(mylm)
+cor.test(mm1$Alv,mm1$MDM)
+
+mm1r <- as.data.frame(apply(mm1,2,rank))
+plot(mm1r,cex=0.3)
+mylm <- lm(mm1r)
+abline(mylm,col="red",lty=2,lwd=3)
+summary(mylm)
+cor.test(mm1r$Alv,mm1r$MDM)
+
+```
+
+## DE2 Latently-infected vs bystander cells
+
+MDM group.
+
+```{r,de2m}
+
+pb2m <- pbmdm[,c(grep("bystander",colnames(pbmdm)),grep("latent",colnames(pbmdm)))]
+head(pb2m)
+pb2mf <- pb2m[which(rowMeans(pb2m)>=10),]
+head(pb2mf)
+colSums(pb2mf)
+
+des2m <- as.data.frame(grepl("latent",colnames(pb2mf)))
+colnames(des2m) <- "case"
+
+dds <- DESeqDataSetFromMatrix(countData = pb2mf , colData = des2m, design = ~ case)
+
+res <- DESeq(dds)
+z <- results(res)
+vsd <- vst(dds, blind=FALSE)
+zz <- cbind(as.data.frame(z),assay(vsd))
+de <- as.data.frame(zz[order(zz$pvalue),])
+de2mf <- de
+#write.table(de2mf,"de2mf.tsv",sep="\t")
+
+nrow(subset(de2mf,padj<0.05 & log2FoldChange>0))
+nrow(subset(de2mf,padj<0.05 & log2FoldChange<0))
+
+head(subset(de2mf,log2FoldChange>0),10)[,1:6] %>%
+  kbl(caption="Top upregulated genes in latent compared to bystander (MDM unpaired)") %>%
+  kable_paper("hover", full_width = F)
+
+head(subset(de2mf,log2FoldChange<0),10)[,1:6] %>%
+  kbl(caption="Top downregulated genes in latent compared to bystander (MDM unpaired)") %>%
+  kable_paper("hover", full_width = F)
+
+des2m$sample <- rep(1:3,2)
+
+dds <- DESeqDataSetFromMatrix(countData = pb2mf , colData = des2m, design = ~ sample + case)
+
+res <- DESeq(dds)
+z <- results(res)
+vsd <- vst(dds, blind=FALSE)
+zz <- cbind(as.data.frame(z),assay(vsd))
+de <- as.data.frame(zz[order(zz$pvalue),])
+de2mf <- de
+write.table(de2mf,"de2mf.tsv",sep="\t")
+
+nrow(subset(de2mf,padj<0.05 & log2FoldChange>0))
+nrow(subset(de2mf,padj<0.05 & log2FoldChange<0))
+
+head(subset(de2mf,log2FoldChange>0),10)[,1:6] %>%
+  kbl(caption="Top upregulated genes in latent compared to bystander (MDM paired)") %>%
+  kable_paper("hover", full_width = F)
+
+head(subset(de2mf,log2FoldChange<0),10)[,1:6] %>%
+  kbl(caption="Top downregulated genes in latent compared to bystander (MDM paired)") %>%
+  kable_paper("hover", full_width = F)
+
+m2m <- mitch_import(de,DEtype="deseq2",joinType="full")
+mres2m <- mitch_calc(m2m,genesets=go,minsetsize=5,cores=4,priority="effect")
+res <- mres2m$enrichment_result
+res <- subset(res,p.adjustANOVA<0.05)
+resup <- subset(res,s.dist>0)
+resdn <- subset(res,s.dist<0)
+s <- c(head(resup$s.dist,10), head(resdn$s.dist,10))
+names(s) <- c(head(resup$set,10),head(resdn$set,10))
+s <- s[order(s)]
+cols <- gsub("1","red",gsub("-1","blue",as.character(sign(s))))
+par(mar=c(5,27,3,1))
+barplot(abs(s),las=1,horiz=TRUE,col=cols,xlab="ES",cex.names=0.8,main="")
+if (! file.exists("MDM_bystander_vs_latent.html") ) {
+  mitch_report(mres2m,outfile="MDM_bystander_vs_latent.html")
+}
+
+```
+
+Alv cells.
+
+```{r,de2alv}
+
+pb2a <- pbalv[,c(grep("bystander",colnames(pbalv)),grep("latent",colnames(pbalv)))]
+head(pb2a)
+pb2af <- pb2a[which(rowMeans(pb2a)>=10),]
+head(pb2af)
+colSums(pb2af)
+
+des2a <- as.data.frame(grepl("latent",colnames(pb2af)))
+colnames(des2a) <- "case"
+
+dds <- DESeqDataSetFromMatrix(countData = pb2af , colData = des2a, design = ~ case)
+
+res <- DESeq(dds)
+z <- results(res)
+vsd <- vst(dds, blind=FALSE)
+zz <- cbind(as.data.frame(z),assay(vsd))
+de <- as.data.frame(zz[order(zz$pvalue),])
+de2af <- de
+#write.table(de2af,"de2af.tsv",sep="\t")
+
+nrow(subset(de2af,padj<0.05 & log2FoldChange>0))
+nrow(subset(de2af,padj<0.05 & log2FoldChange<0))
+
+head(subset(de2af, log2FoldChange>0),10)[,1:6] %>%
+  kbl(caption="Top upregulated genes in latent compared to bystander (Alv unpaired)") %>%
+  kable_paper("hover", full_width = F)
+
+head(subset(de2af, log2FoldChange<0),10)[,1:6] %>%
+  kbl(caption="Top downregulated genes in latent compared to bystander (Alv unpaired)") %>%
+  kable_paper("hover", full_width = F)
+
+des2a$sample <- rep(1:4,2)
+
+dds <- DESeqDataSetFromMatrix(countData = pb2af , colData = des2a, design = ~ case)
+
+res <- DESeq(dds)
+z <- results(res)
+vsd <- vst(dds, blind=FALSE)
+zz <- cbind(as.data.frame(z),assay(vsd))
+de <- as.data.frame(zz[order(zz$pvalue),])
+de2af <- de
+write.table(de2af,"de2af.tsv",sep="\t")
+
+nrow(subset(de2af,padj<0.05 & log2FoldChange>0))
+nrow(subset(de2af,padj<0.05 & log2FoldChange<0))
+
+head(subset(de2af, log2FoldChange>0),10)[,1:6] %>%
+  kbl(caption="Top upregulated genes in latent compared to bystander (Alv paired)") %>%
+  kable_paper("hover", full_width = F)
+
+head(subset(de2af, log2FoldChange<0),10)[,1:6] %>%
+  kbl(caption="Top downregulated genes in latent compared to bystander (Alv paired)") %>%
+  kable_paper("hover", full_width = F)
+
+m2a <- mitch_import(de,DEtype="deseq2",joinType="full")
+mres2a <- mitch_calc(m2a,genesets=go,minsetsize=5,cores=4,priority="effect")
+res <- mres2a$enrichment_result
+res <- subset(res,p.adjustANOVA<0.05)
+resup <- subset(res,s.dist>0)
+resdn <- subset(res,s.dist<0)
+s <- c(head(resup$s.dist,10), head(resdn$s.dist,10))
+names(s) <- c(head(resup$set,10),head(resdn$set,10))
+s <- s[order(s)]
+cols <- gsub("1","red",gsub("-1","blue",as.character(sign(s))))
+par(mar=c(5,27,3,1))
+barplot(abs(s),las=1,horiz=TRUE,col=cols,xlab="ES",cex.names=0.8,main="")
+if (! file.exists("Alv_bystander_vs_latent.html") ) {
+  mitch_report(mres2a,outfile="Alv_bystander_vs_latent.html")
+}
+
+```
+
+Combined.
+
+```{r,de2am}
+
+mm2 <- merge(m2a,m2m,by=0)
+
+head(mm2)
+rownames(mm2) <- mm2[,1]
+mm2[,1]=NULL
+colnames(mm2) <- c("Alv","MDM")
+plot(mm2)
+mylm <- lm(mm2)
+abline(mylm,col="red",lty=2,lwd=3)
+summary(mylm)
+cor.test(mm2$Alv,mm2$MDM)
+
+mm2r <- as.data.frame(apply(mm2,2,rank))
+plot(mm2r,cex=0.3)
+mylm <- lm(mm2r)
+abline(mylm,col="red",lty=2,lwd=3)
+summary(mylm)
+cor.test(mm2r$Alv,mm2r$MDM)
+
+```
+
+
+
+## DE3 Active vs mock
+
+MDM group.
+
+```{r,de3m}
+
+pb3m <- pbmdm[,c(grep("active",colnames(pbmdm)),grep("mock",colnames(pbmdm)))]
+
+head(pb3m)
+pb3mf <- pb3m[which(rowMeans(pb3m)>=10),]
+head(pb3mf)
+colSums(pb3mf)
+
+des3m <- as.data.frame(grepl("active",colnames(pb3mf)))
+colnames(des3m) <- "case"
+
+dds <- DESeqDataSetFromMatrix(countData = pb3mf , colData = des3m, design = ~ case)
+
+res <- DESeq(dds)
+z <- results(res)
+vsd <- vst(dds, blind=FALSE)
+zz <- cbind(as.data.frame(z),assay(vsd))
+de <- as.data.frame(zz[order(zz$pvalue),])
+de3mf <- de
+write.table(de3mf,"de3mf.tsv",sep="\t")
+
+nrow(subset(de3mf,padj<0.05 & log2FoldChange>0))
+nrow(subset(de3mf,padj<0.05 & log2FoldChange<0))
+
+head(subset(de3mf,padj<0.05 & log2FoldChange>0),10)[,1:6] %>%
+  kbl(caption="Top upregulated genes in active MDM cells compared to mock") %>%
+  kable_paper("hover", full_width = F)
+
+head(subset(de1mf,padj<0.05 & log2FoldChange<0),10)[,1:6] %>%
+  kbl(caption="Top downregulated genes in active MDM cells compared to mock") %>%
+  kable_paper("hover", full_width = F)
+
+m3m <- mitch_import(de,DEtype="deseq2",joinType="full")
+mres3m <- mitch_calc(m3m,genesets=go,minsetsize=5,cores=4,priority="effect")
+res <- mres3m$enrichment_result
+res <- subset(res,p.adjustANOVA<0.05)
+resup <- subset(res,s.dist>0)
+resdn <- subset(res,s.dist<0)
+s <- c(head(resup$s.dist,10), head(resdn$s.dist,10))
+names(s) <- c(head(resup$set,10),head(resdn$set,10))
+s <- s[order(s)]
+cols <- gsub("1","red",gsub("-1","blue",as.character(sign(s))))
+par(mar=c(5,27,3,1))
+barplot(abs(s),las=1,horiz=TRUE,col=cols,xlab="ES",cex.names=0.8,main="")
+if (! file.exists("MDM_mock_vs_active.html") ) {
+  mitch_report(mres3m,outfile="MDM_mock_vs_active.html")
+}
+
+```
+
+```{r,de3alv}
+
+pb3a <- pbalv[,c(grep("active",colnames(pbalv)),grep("mock",colnames(pbalv)))]
+
+head(pb3a)
+pb3af <- pb3a[which(rowMeans(pb3a)>=10),]
+head(pb3af)
+colSums(pb3af)
+
+des3a <- as.data.frame(grepl("active",colnames(pb3af)))
+colnames(des3a) <- "case"
+
+dds <- DESeqDataSetFromMatrix(countData = pb3af , colData = des3a, design = ~ case)
+
+res <- DESeq(dds)
+z <- results(res)
+vsd <- vst(dds, blind=FALSE)
+zz <- cbind(as.data.frame(z),assay(vsd))
+de <- as.data.frame(zz[order(zz$pvalue),])
+de3af <- de
+write.table(de3af,"de3af.tsv",sep="\t")
+
+nrow(subset(de3af,padj<0.05 & log2FoldChange>0))
+nrow(subset(de3af,padj<0.05 & log2FoldChange<0))
+
+head(subset(de3af,padj<0.05 & log2FoldChange>0),10)[,1:6] %>%
+  kbl(caption="Top upregulated genes in active Alv cells compared to mock") %>%
+  kable_paper("hover", full_width = F)
+
+head(subset(de3af,padj<0.05 & log2FoldChange<0),10)[,1:6] %>%
+  kbl(caption="Top upregulated genes in active Alv cells compared to mock") %>%
+  kable_paper("hover", full_width = F)
+
+m3a <- mitch_import(de,DEtype="deseq2",joinType="full")
+mres3a <- mitch_calc(m3a,genesets=go,minsetsize=5,cores=4,priority="effect")
+res <- mres3a$enrichment_result
+res <- subset(res,p.adjustANOVA<0.05)
+resup <- subset(res,s.dist>0)
+resdn <- subset(res,s.dist<0)
+s <- c(head(resup$s.dist,10), head(resdn$s.dist,10))
+names(s) <- c(head(resup$set,10),head(resdn$set,10))
+s <- s[order(s)]
+cols <- gsub("1","red",gsub("-1","blue",as.character(sign(s))))
+par(mar=c(5,27,3,1))
+barplot(abs(s),las=1,horiz=TRUE,col=cols,xlab="ES",cex.names=0.8,main="")
+if (! file.exists("Alv_mock_vs_active.html") ) {
+  mitch_report(mres3a,outfile="Alv_mock_vs_active.html")
+}
+
+```
+
+Combined.
+
+```{r,de3am}
+
+mm3 <- merge(m3a,m3m,by=0)
+
+head(mm3)
+rownames(mm3) <- mm3[,1]
+mm3[,1]=NULL
+colnames(mm3) <- c("Alv","MDM")
+plot(mm3)
+mylm <- lm(mm3)
+abline(mylm,col="red",lty=2,lwd=3)
+summary(mylm)
+cor.test(mm3$Alv,mm3$MDM)
+
+mm3r <- as.data.frame(apply(mm3,2,rank))
+plot(mm3r,cex=0.3)
+mylm <- lm(mm3r)
+abline(mylm,col="red",lty=2,lwd=3)
+summary(mylm)
+cor.test(mm3r$Alv,mm3r$MDM)
+
+```
+
+
+## DE4 Mock vs bystander  
+
+MDM group.
+
+```{r,de4m}
+
+pb4m <- pbmdm[,c(grep("mock",colnames(pbmdm)),grep("bystander",colnames(pbmdm)))]
+
+head(pb4m)
+pb4mf <- pb4m[which(rowMeans(pb4m)>=10),]
+head(pb4mf)
+colSums(pb4mf)
+
+des4m <- as.data.frame(grepl("bystander",colnames(pb4mf)))
+colnames(des4m) <- "case"
+
+dds <- DESeqDataSetFromMatrix(countData = pb4mf , colData = des4m, design = ~ case)
+
+res <- DESeq(dds)
+z <- results(res)
+vsd <- vst(dds, blind=FALSE)
+zz <- cbind(as.data.frame(z),assay(vsd))
+de <- as.data.frame(zz[order(zz$pvalue),])
+de4mf <- de
+write.table(de4mf,"de4mf.tsv",sep="\t")
+
+nrow(subset(de4mf,padj<0.05 & log2FoldChange>0))
+nrow(subset(de4mf,padj<0.05 & log2FoldChange<0))
+
+head(subset(de4mf, log2FoldChange>0),10)[,1:6] %>%
+  kbl(caption="Top upregulated genes in bystander MDM cells compared to mock") %>%
+  kable_paper("hover", full_width = F)
+
+head(subset(de4mf, log2FoldChange<0),10)[,1:6] %>%
+  kbl(caption="Top downregulated genes in bystander MDM cells compared to mock") %>%
+  kable_paper("hover", full_width = F)
+
+m4m <- mitch_import(de,DEtype="deseq2",joinType="full")
+mres4m <- mitch_calc(m4m,genesets=go,minsetsize=5,cores=4,priority="effect")
+res <- mres4m$enrichment_result
+res <- subset(res,p.adjustANOVA<0.05)
+resup <- subset(res,s.dist>0)
+resdn <- subset(res,s.dist<0)
+s <- c(head(resup$s.dist,10), head(resdn$s.dist,10))
+names(s) <- c(head(resup$set,10),head(resdn$set,10))
+s <- s[order(s)]
+cols <- gsub("1","red",gsub("-1","blue",as.character(sign(s))))
+par(mar=c(5,27,3,1))
+barplot(abs(s),las=1,horiz=TRUE,col=cols,xlab="ES",cex.names=0.8,main="")
+if (! file.exists("MDM_mock_vs_bystander.html") ) {
+  mitch_report(mres4m,outfile="MDM_mock_vs_bystander.html")
+}
+
+```
+
+Alv cells.
+
+```{r,de4alv}
+
+pb4a <- pbalv[,c(grep("mock",colnames(pbalv)),grep("bystander",colnames(pbalv)))]
+
+head(pb4a)
+pb4af <- pb4a[which(rowMeans(pb4a)>=10),]
+head(pb4af)
+colSums(pb4af)
+
+des4a <- as.data.frame(grepl("bystander",colnames(pb4af)))
+colnames(des4a) <- "case"
+
+dds <- DESeqDataSetFromMatrix(countData = pb4af , colData = des4a, design = ~ case)
+
+res <- DESeq(dds)
+z <- results(res)
+vsd <- vst(dds, blind=FALSE)
+zz <- cbind(as.data.frame(z),assay(vsd))
+de <- as.data.frame(zz[order(zz$pvalue),])
+de4af <- de
+write.table(de4af,"de4af.tsv",sep="\t")
+
+nrow(subset(de4af,padj<0.05 & log2FoldChange>0))
+nrow(subset(de4af,padj<0.05 & log2FoldChange<0))
+
+head(subset(de4af,padj<0.05 & log2FoldChange>0),10)[,1:6] %>%
+  kbl(caption="Top upregulated genes in latent Alv cells compared to ") %>%
+  kable_paper("hover", full_width = F)
+
+head(subset(de4af, log2FoldChange<0),10)[,1:6] %>%
+  kbl(caption="Top upregulated genes in active Alv cells") %>%
+  kable_paper("hover", full_width = F)
+
+m4a <- mitch_import(de,DEtype="deseq2",joinType="full")
+mres4a <- mitch_calc(m4a,genesets=go,minsetsize=5,cores=4,priority="effect")
+res <- mres4a$enrichment_result
+res <- subset(res,p.adjustANOVA<0.05)
+resup <- subset(res,s.dist>0)
+resdn <- subset(res,s.dist<0)
+s <- c(head(resup$s.dist,10), head(resdn$s.dist,10))
+names(s) <- c(head(resup$set,10),head(resdn$set,10))
+s <- s[order(s)]
+cols <- gsub("1","red",gsub("-1","blue",as.character(sign(s))))
+par(mar=c(5,27,3,1))
+barplot(abs(s),las=1,horiz=TRUE,col=cols,xlab="ES",cex.names=0.8,main="")
+if (! file.exists("Alv_mock_vs_bystander.html") ) {
+  mitch_report(mres4a,outfile="Alv_mock_vs_bystander.html")
+}
+
+```
+
+
+Combined.
+
+```{r,de4am}
+
+mm4 <- merge(m4a,m4m,by=0)
+
+head(mm4)
+rownames(mm4) <- mm4[,1]
+mm4[,1]=NULL
+colnames(mm4) <- c("Alv","MDM")
+plot(mm4)
+mylm <- lm(mm4)
+abline(mylm,col="red",lty=2,lwd=3)
+summary(mylm)
+cor.test(mm4$Alv,mm4$MDM)
+
+mm4r <- as.data.frame(apply(mm4,2,rank))
+plot(mm4r,cex=0.3)
+mylm <- lm(mm4r)
+abline(mylm,col="red",lty=2,lwd=3)
+summary(mylm)
+cor.test(mm4r$Alv,mm4r$MDM)
+
+```
+
+## Cross comparison pathway enrichment heatmap
+
+```{r,multiheat}
+
+l1 <- list("de1a"=de1af,"de1m"=de1mf,"de2a"=de2af,"de2m"=de2mf,
+  "de3a"=de3af,"de3m"=de3mf,"de4a"=de4af,"de4m"=de4mf)
+
+lm <- mitch_import(x=l1,DEtype="deseq2",joinType="inner")
+
+lmres <- mitch_calc(x=lm,genesets=go,minsetsize=5,cores=8,priority="effect")
+
+top <- head(lmres$enrichment_result,50)
+
+top %>%
+  kbl(caption="Top pathways across all contrasts") %>%
+  kable_paper("hover", full_width = F)
+
+colfunc <- colorRampPalette(c("blue", "white", "red"))
+
+library("gplots")
+
+heatmap.2(mx,scale="none",trace="none",margins=c(6,25),
+  col=colfunc(25),cexRow=0.6,cexCol=0.8)
+
+```
+
+## Session information
+
+For reproducibility.
+
+```{r,session}
+
+save.image("scanalysis.Rdata")
+
+sessionInfo()
+
+```
+
