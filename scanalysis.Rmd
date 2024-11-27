@@ -1,4 +1,4 @@
----
+--
 title: "Single cell transcriptomes of macrophages with HIV 2024 - comparative analysis"
 author: "Burnet Bioinformatics group"
 date: "`r Sys.Date()`"
@@ -519,6 +519,12 @@ head(subset(de1mf,padj<0.05 & log2FoldChange<0),10)[,1:6] %>%
 m1m <- mitch_import(de,DEtype="deseq2",joinType="full")
 mres1m <- mitch_calc(m1m,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres1m$enrichment_result
+
+mitchtbl <- mres1m$enrichment_result
+em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
+write.table(em,"de1mf_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
 resdn <- subset(res,s.dist<0)
@@ -573,6 +579,12 @@ head(subset(de1af,padj<0.05 & log2FoldChange<0),10)[,1:6] %>%
 m1a <- mitch_import(de,DEtype="deseq2",joinType="full")
 mres1a <- mitch_calc(m1a,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres1a$enrichment_result
+
+mitchtbl <- mres1a$enrichment_result
+em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
+write.table(em,"de1af_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
 resdn <- subset(res,s.dist<0)
@@ -675,6 +687,12 @@ head(subset(de2mf,log2FoldChange<0),10)[,1:6] %>%
 m2m <- mitch_import(de,DEtype="deseq2",joinType="full")
 mres2m <- mitch_calc(m2m,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres2m$enrichment_result
+
+mitchtbl <- mres2m$enrichment_result
+em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
+write.table(em,"de2mf_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
 resdn <- subset(res,s.dist<0)
@@ -750,6 +768,12 @@ head(subset(de2af, log2FoldChange<0),10)[,1:6] %>%
 m2a <- mitch_import(de,DEtype="deseq2",joinType="full")
 mres2a <- mitch_calc(m2a,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres2a$enrichment_result
+
+mitchtbl <- mres2a$enrichment_result
+em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
+write.table(em,"de2af_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
 resdn <- subset(res,s.dist<0)
@@ -832,6 +856,12 @@ head(subset(de1mf,padj<0.05 & log2FoldChange<0),10)[,1:6] %>%
 m3m <- mitch_import(de,DEtype="deseq2",joinType="full")
 mres3m <- mitch_calc(m3m,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres3m$enrichment_result
+
+mitchtbl <- mres3m$enrichment_result
+em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
+write.table(em,"de3mf_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
 resdn <- subset(res,s.dist<0)
@@ -883,6 +913,12 @@ head(subset(de3af,padj<0.05 & log2FoldChange<0),10)[,1:6] %>%
 m3a <- mitch_import(de,DEtype="deseq2",joinType="full")
 mres3a <- mitch_calc(m3a,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres3a$enrichment_result
+
+mitchtbl <- mres3a$enrichment_result
+em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
+write.table(em,"de3af_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
 resdn <- subset(res,s.dist<0)
@@ -964,6 +1000,12 @@ head(subset(de4mf, log2FoldChange<0),10)[,1:6] %>%
 m4m <- mitch_import(de,DEtype="deseq2",joinType="full")
 mres4m <- mitch_calc(m4m,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres4m$enrichment_result
+
+mitchtbl <- mres4m$enrichment_result
+em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
+write.table(em,"de4mf_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
 resdn <- subset(res,s.dist<0)
@@ -1017,6 +1059,12 @@ head(subset(de4af, log2FoldChange<0),10)[,1:6] %>%
 m4a <- mitch_import(de,DEtype="deseq2",joinType="full")
 mres4a <- mitch_calc(m4a,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres4a$enrichment_result
+
+mitchtbl <- mres4a$enrichment_result
+em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
+write.table(em,"de4af_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
 resdn <- subset(res,s.dist<0)
@@ -1077,9 +1125,11 @@ top %>%
 
 colfunc <- colorRampPalette(c("blue", "white", "red"))
 
-library("gplots")
+mx <- top[,grep("^s\\.",colnames(top))]
+mx <- mx[,-ncol(mx)]
+rownames(mx) <- top$set
 
-heatmap.2(mx,scale="none",trace="none",margins=c(6,25),
+heatmap.2(as.matrix(mx),scale="none",trace="none",margins=c(6,25),
   col=colfunc(25),cexRow=0.6,cexCol=0.8)
 
 ```
