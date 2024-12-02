@@ -472,8 +472,12 @@ Gene ontology.
 
 ```{r,go1}
 
-go <- gmt_import("c5.go.v2023.2.Hs.symbols.gmt")
-names(go) <- gsub("_"," ",names(go))
+#go <- gmt_import("c5.go.v2023.2.Hs.symbols.gmt")
+#names(go) <- gsub("_"," ",names(go))
+
+#wget https://ziemann-lab.net/public/tmp/go_2024-11.gmt
+go <- gmt_import("go_2024-11.gmt")
+
 
 ```
 
@@ -521,7 +525,7 @@ mres1m <- mitch_calc(m1m,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres1m$enrichment_result
 
 mitchtbl <- mres1m$enrichment_result
-em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+em <- data.frame(sapply(strsplit(mitchtbl$set," "),"[[",1),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
 write.table(em,"de1mf_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
@@ -581,7 +585,7 @@ mres1a <- mitch_calc(m1a,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres1a$enrichment_result
 
 mitchtbl <- mres1a$enrichment_result
-em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+em <- data.frame(sapply(strsplit(mitchtbl$set," "),"[[",1),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
 write.table(em,"de1af_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
@@ -689,7 +693,7 @@ mres2m <- mitch_calc(m2m,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres2m$enrichment_result
 
 mitchtbl <- mres2m$enrichment_result
-em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+em <- data.frame(sapply(strsplit(mitchtbl$set," "),"[[",1),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
 write.table(em,"de2mf_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
@@ -770,7 +774,7 @@ mres2a <- mitch_calc(m2a,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres2a$enrichment_result
 
 mitchtbl <- mres2a$enrichment_result
-em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+em <- data.frame(sapply(strsplit(mitchtbl$set," "),"[[",1),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
 write.table(em,"de2af_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
@@ -858,7 +862,7 @@ mres3m <- mitch_calc(m3m,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres3m$enrichment_result
 
 mitchtbl <- mres3m$enrichment_result
-em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+em <- data.frame(sapply(strsplit(mitchtbl$set," "),"[[",1),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
 write.table(em,"de3mf_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
@@ -915,7 +919,7 @@ mres3a <- mitch_calc(m3a,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres3a$enrichment_result
 
 mitchtbl <- mres3a$enrichment_result
-em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+em <- data.frame(sapply(strsplit(mitchtbl$set," "),"[[",1),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
 write.table(em,"de3af_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
@@ -1002,7 +1006,7 @@ mres4m <- mitch_calc(m4m,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres4m$enrichment_result
 
 mitchtbl <- mres4m$enrichment_result
-em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+em <- data.frame(sapply(strsplit(mitchtbl$set," "),"[[",1),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
 write.table(em,"de4mf_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
@@ -1061,7 +1065,7 @@ mres4a <- mitch_calc(m4a,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mres4a$enrichment_result
 
 mitchtbl <- mres4a$enrichment_result
-em <- data.frame(rownames(mitchtbl),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+em <- data.frame(sapply(strsplit(mitchtbl$set," "),"[[",1),mitchtbl$set,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
 write.table(em,"de4af_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
@@ -1079,7 +1083,6 @@ if (! file.exists("Alv_mock_vs_bystander.html") ) {
 }
 
 ```
-
 
 Combined.
 
