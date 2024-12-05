@@ -28,6 +28,8 @@ suppressPackageStartupMessages({
   library("muscat")
   library("DESeq2")
   library("mitch")
+  library("vioplot")
+  library("beeswarm")
 })
 
 ```
@@ -548,8 +550,6 @@ bystander6 -> alv_bystander4
 
 ```{r,rename1}
 
-blah()
-
 mdm_mock1 <- gex1_h1_d0 #MDMP236 MDMmock
 mdm_mock2 <- gex1_h1_d1 #MDMV236 MDMmock
 mdm_mock3<- gex2_h1 #MDMO236 MDMmock
@@ -646,6 +646,9 @@ rev(sapply(mylist,ncol))
 barplot(rev(sapply(mylist,ncol)),horiz=TRUE,las=1,xlab="no. cells")
 
 rev(sapply(mylist,function(mx) {sum(colSums(mx))}))
+
+par(mar = c(5.1, 10.1, 4.1, 2.1))
+
 barplot(rev(sapply(mylist,function(mx) {sum(colSums(mx))})),horiz=TRUE,las=1,xlab="no. counts")
 
 res <- rev(sapply(mylist,function(mx) {
@@ -653,6 +656,8 @@ res <- rev(sapply(mylist,function(mx) {
 }))
 res
 barplot(rev(res),horiz=TRUE,las=1,xlab="% HIV reads")
+
+par(mar = c(5.1, 4.1, 4.1, 2.1))
 
 ```
 
@@ -672,6 +677,7 @@ chrmx <- sapply(mylist,function(mx) {
 
 chryx <- chrmx["chrY",] / chrmx["chrX",] * 100
 chryx
+par(mar = c(5.1, 10.1, 4.1, 2.1))
 barplot(rev(chryx),horiz=TRUE,las=1,xlab="Ratio ChrY to ChrX x100")
 
 ```
@@ -687,13 +693,42 @@ barplot(rev(chrmt),horiz=TRUE,las=1,xlab="% chrM reads")
 
 ```
 
+Let's take a look at mtDNA transcripts at the level of individual cells.
+
+```{r,chrmtbycell}
+
+mt <- lapply(mylist, function(x) {
+  xmt <- x[grep("MT-",rownames(x)),]
+  sapply(1:ncol(x), function(j) { sum(xmt[,j])/sum(x[,j]) } )
+} )
+
+vioplot(mt)
+
+boxplot(mt,horizontal=TRUE,cex=0,col="white",las=1,
+ main="mtDNA gene proportion")
+
+barplot(sapply(mt, function(x) { length(which(x>0.15))/length(x) } ),horiz=TRUE,las=1)
+
+barplot(sapply(mt, function(x) { length(which(x>0.15))/length(x) } ),horiz=TRUE,las=1, main="Proportion of cells with >15% mito reads")
+
+fmt <- lapply(mylist, function(x) {
+  xmt <- x[grep("MT-",rownames(x)),]
+  v <- sapply(1:ncol(x), function(j) { sum(xmt[,j])/sum(x[,j]) } )
+  f <-  x[,which(v<0.15)]
+  return(f)
+} )
+
+lapply(fmt,dim)
+
+```
+
 ## Partitioning bystander and latent
 
 ## Save data object
 
 ```{r,save}
 
-saveRDS(mylist,"macrophage_counts.rds")
+saveRDS(fmt,"macrophage_counts.rds")
 
 ```
 
