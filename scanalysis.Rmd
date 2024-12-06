@@ -414,6 +414,46 @@ pctcc %>% kbl(caption="cell proportions") %>% kable_paper("hover", full_width = 
 
 ```
 
+## Focus on MOCK vs ACTIVE - exclude latent and bystander
+
+```{r,mockactive}
+
+focus <- meta_inf[grep("latent",rownames(meta_inf),invert=TRUE),]
+focus <- focus[grep("bystander",rownames(focus),invert=TRUE),]
+focus_mdm <- focus[grep("mdm",rownames(focus)),]
+focus_alv <- focus[grep("alv",rownames(focus)),]
+
+mono_focus_mdm <- mono[,which(colnames(mono) %in% rownames(focus_mdm))]
+mono_focus_alv <- mono[,which(colnames(mono) %in% rownames(focus_alv))]
+
+# mono_focus_mdm
+mono_focus_mdm <- FindVariableFeatures(mono_focus_mdm, selection.method = "vst", nfeatures = 2000)
+mono_focus_mdm <- RunPCA(mono_focus_mdm, features = VariableFeatures(object = mono_focus_mdm))
+DimHeatmap(mono_focus_mdm, dims = 1:2, cells = 500, balanced = TRUE)
+DimHeatmap(mono_focus_mdm, dims = 3:4, cells = 500, balanced = TRUE)
+ElbowPlot(mono_focus_mdm)
+mono_focus_mdm <- FindNeighbors(mono_focus_mdm, dims = 1:4)
+mono_focus_mdm <- FindClusters(mono_focus_mdm, algorithm = 3, resolution = 0.3, verbose = FALSE)
+mono_focus_mdm <- RunUMAP(mono_focus_mdm, dims = 1:4)
+DimPlot(mono_focus_mdm, reduction = "umap", label=TRUE)
+DimPlot(mono_focus_mdm, group.by="monaco_fine_annotation" , reduction = "umap", label=TRUE)
+DimPlot(mono_focus_mdm, group.by="sample" , reduction = "umap", label=TRUE)
+
+# mono_focus_alv
+mono_focus_alv <- FindVariableFeatures(mono_focus_alv, selection.method = "vst", nfeatures = 2000)
+mono_focus_alv <- RunPCA(mono_focus_alv, features = VariableFeatures(object = mono_focus_alv))
+DimHeatmap(mono_focus_alv, dims = 1:2, cells = 500, balanced = TRUE)
+DimHeatmap(mono_focus_alv, dims = 3:4, cells = 500, balanced = TRUE)
+ElbowPlot(mono_focus_alv)
+mono_focus_alv <- FindNeighbors(mono_focus_alv, dims = 1:4)
+mono_focus_alv <- FindClusters(mono_focus_alv, algorithm = 3, resolution = 0.3, verbose = FALSE)
+mono_focus_alv <- RunUMAP(mono_focus_alv, dims = 1:4)
+DimPlot(mono_focus_alv, reduction = "umap", label=TRUE)
+DimPlot(mono_focus_alv, group.by="monaco_fine_annotation" , reduction = "umap", label=TRUE)
+DimPlot(mono_focus_alv, group.by="sample" , reduction = "umap", label=TRUE)
+
+```
+
 ## Differential expression
 
 We are going to use muscat for pseudobulk analysis.
@@ -499,6 +539,11 @@ colSums(pb1mf)
 des1m <- as.data.frame(grepl("active",colnames(pb1mf)))
 colnames(des1m) <- "case"
 
+plot(cmdscale(dist(t(pb1mf))), xlab="Coordinate 1", ylab="Coordinate 2",
+  type = "p",pch=19,col="gray",cex=2)
+
+text(cmdscale(dist(t(pb1mf))), labels=colnames(pb1mf) )
+
 dds <- DESeqDataSetFromMatrix(countData = pb1mf , colData = des1m, design = ~ case)
 
 res <- DESeq(dds)
@@ -561,6 +606,11 @@ colSums(pb1af)
 
 des1a <- as.data.frame(grepl("active",colnames(pb1af)))
 colnames(des1a) <- "case"
+
+plot(cmdscale(dist(t(pb1af))), xlab="Coordinate 1", ylab="Coordinate 2",
+  type = "p",pch=19,col="gray",cex=2)
+
+text(cmdscale(dist(t(pb1af))), labels=colnames(pb1af) )
 
 dds <- DESeqDataSetFromMatrix(countData = pb1af , colData = des1a, design = ~ case)
 
@@ -651,6 +701,11 @@ colSums(pb2mf)
 des2m <- as.data.frame(grepl("latent",colnames(pb2mf)))
 colnames(des2m) <- "case"
 
+plot(cmdscale(dist(t(pb2mf))), xlab="Coordinate 1", ylab="Coordinate 2",
+  type = "p",pch=19,col="gray",cex=2)
+
+text(cmdscale(dist(t(pb2mf))), labels=colnames(pb2mf) )
+
 dds <- DESeqDataSetFromMatrix(countData = pb2mf , colData = des2m, design = ~ case)
 
 res <- DESeq(dds)
@@ -735,6 +790,11 @@ colSums(pb2af)
 
 des2a <- as.data.frame(grepl("latent",colnames(pb2af)))
 colnames(des2a) <- "case"
+
+plot(cmdscale(dist(t(pb2af))), xlab="Coordinate 1", ylab="Coordinate 2",
+  type = "p",pch=19,col="gray",cex=2)
+
+text(cmdscale(dist(t(pb2af))), labels=colnames(pb2af) )
 
 dds <- DESeqDataSetFromMatrix(countData = pb2af , colData = des2a, design = ~ case)
 
@@ -851,6 +911,11 @@ colSums(pb3mf)
 des3m <- as.data.frame(grepl("active",colnames(pb3mf)))
 colnames(des3m) <- "case"
 
+plot(cmdscale(dist(t(pb3mf))), xlab="Coordinate 1", ylab="Coordinate 2",
+  type = "p",pch=19,col="gray",cex=2)
+
+text(cmdscale(dist(t(pb3mf))), labels=colnames(pb3mf) )
+
 dds <- DESeqDataSetFromMatrix(countData = pb3mf , colData = des3m, design = ~ case)
 
 res <- DESeq(dds)
@@ -911,6 +976,11 @@ colSums(pb3af)
 
 des3a <- as.data.frame(grepl("active",colnames(pb3af)))
 colnames(des3a) <- "case"
+
+plot(cmdscale(dist(t(pb3af))), xlab="Coordinate 1", ylab="Coordinate 2",
+  type = "p",pch=19,col="gray",cex=2)
+
+text(cmdscale(dist(t(pb3af))), labels=colnames(pb3af) )
 
 dds <- DESeqDataSetFromMatrix(countData = pb3af , colData = des3a, design = ~ case)
 
@@ -1003,6 +1073,11 @@ colSums(pb4mf)
 des4m <- as.data.frame(grepl("bystander",colnames(pb4mf)))
 colnames(des4m) <- "case"
 
+plot(cmdscale(dist(t(pb4mf))), xlab="Coordinate 1", ylab="Coordinate 2",
+  type = "p",pch=19,col="gray",cex=2)
+
+text(cmdscale(dist(t(pb4mf))), labels=colnames(pb4mf) )
+
 dds <- DESeqDataSetFromMatrix(countData = pb4mf , colData = des4m, design = ~ case)
 
 res <- DESeq(dds)
@@ -1065,6 +1140,11 @@ colSums(pb4af)
 
 des4a <- as.data.frame(grepl("bystander",colnames(pb4af)))
 colnames(des4a) <- "case"
+
+plot(cmdscale(dist(t(pb4af))), xlab="Coordinate 1", ylab="Coordinate 2",
+  type = "p",pch=19,col="gray",cex=2)
+
+text(cmdscale(dist(t(pb4af))), labels=colnames(pb4af) )
 
 dds <- DESeqDataSetFromMatrix(countData = pb4af , colData = des4a, design = ~ case)
 
@@ -1179,4 +1259,3 @@ save.image("scanalysis.Rdata")
 sessionInfo()
 
 ```
-
