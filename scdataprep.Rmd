@@ -451,57 +451,61 @@ Therefore donor 0 is female and 1 is male.
 
 ## Check HIV in these
 
+HIV genes are rows 1 to 21.
+
 ```{r,checkhiv}
 
-hiv <- mean(colSums(gex1_h1_d0[1:2,])) / mean(colSums(gex1_h1_d0[3:nrow(gex1_h1_d0),]))
+blah()
+
+hiv <- mean(colSums(gex1_h1_d0[1:21,])) / mean(colSums(gex1_h1_d0[22:nrow(gex1_h1_d0),]))
 message(paste("Mock Donor 0 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(gex1_h1_d1[1:2,])) / mean(colSums(gex1_h1_d1[3:nrow(gex1_h1_d1),]))
+hiv <- mean(colSums(gex1_h1_d1[1:21,])) / mean(colSums(gex1_h1_d1[22:nrow(gex1_h1_d1),]))
 message(paste("Mock Donor 1 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(gex1_h2_d0[1:2,])) / mean(colSums(gex1_h2_d0[3:nrow(gex1_h2_d0),]))
+hiv <- mean(colSums(gex1_h2_d0[1:21,])) / mean(colSums(gex1_h2_d0[22:nrow(gex1_h2_d0),]))
 message(paste("GFP- Donor 0 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(gex1_h2_d1[1:2,])) / mean(colSums(gex1_h2_d1[3:nrow(gex1_h2_d1),]))
+hiv <- mean(colSums(gex1_h2_d1[1:21,])) / mean(colSums(gex1_h2_d1[22:nrow(gex1_h2_d1),]))
 message(paste("GFP- Donor 1 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(gex1_h4_d0[1:2,])) / mean(colSums(gex1_h4_d0[3:nrow(gex1_h4_d0),]))
+hiv <- mean(colSums(gex1_h4_d0[1:21,])) / mean(colSums(gex1_h4_d0[22:nrow(gex1_h4_d0),]))
 message(paste("GFP+ Donor 0 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(gex1_h4_d1[1:2,])) / mean(colSums(gex1_h4_d1[3:nrow(gex1_h4_d1),]))
+hiv <- mean(colSums(gex1_h4_d1[1:21,])) / mean(colSums(gex1_h4_d1[22:nrow(gex1_h4_d1),]))
 message(paste("GFP+ Donor 1 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(gex2_h1[1:2,])) / mean(colSums(gex2_h1[3:nrow(gex2_h1),]))
+hiv <- mean(colSums(gex2_h1[1:21,])) / mean(colSums(gex2_h1[22:nrow(gex2_h1),]))
 message(paste("Mock Donor 2 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(gex2_h2[1:2,])) / mean(colSums(gex2_h2[3:nrow(gex2_h2),]))
+hiv <- mean(colSums(gex2_h2[1:21,])) / mean(colSums(gex2_h2[22:nrow(gex2_h2),]))
 message(paste("GFP- Donor 2 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(gex2_h4[1:2,])) / mean(colSums(gex2_h4[3:nrow(gex2_h4),]))
+hiv <- mean(colSums(gex2_h4[1:21,])) / mean(colSums(gex2_h4[22:nrow(gex2_h4),]))
 message(paste("GFP+ Donor 2 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(P239_Alv_MDM_h1[1:2,])) / mean(colSums(P239_Alv_MDM_h1[3:nrow(P239_Alv_MDM_h1),]))
+hiv <- mean(colSums(P239_Alv_MDM_h1[1:21,])) / mean(colSums(P239_Alv_MDM_h1[22:nrow(P239_Alv_MDM_h1),]))
 message(paste("Mock Donor 3 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(P239_Alv_MDM_h2[1:2,])) / mean(colSums(P239_Alv_MDM_h2[3:nrow(P239_Alv_MDM_h2),]))
+hiv <- mean(colSums(P239_Alv_MDM_h2[1:21,])) / mean(colSums(P239_Alv_MDM_h2[22:nrow(P239_Alv_MDM_h2),]))
 message(paste("GFP+ Donor 3 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(P239_Alv_MDM_h3[1:2,])) / mean(colSums(P239_Alv_MDM_h3[3:nrow(P239_Alv_MDM_h3),]))
+hiv <- mean(colSums(P239_Alv_MDM_h3[1:21,])) / mean(colSums(P239_Alv_MDM_h3[22:nrow(P239_Alv_MDM_h3),]))
 message(paste("GPF- Donor 3 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(P239_Alv_MDM_h4[1:2,])) / mean(colSums(P239_Alv_MDM_h4[3:nrow(P239_Alv_MDM_h4),]))
+hiv <- mean(colSums(P239_Alv_MDM_h4[1:21,])) / mean(colSums(P239_Alv_MDM_h4[22:nrow(P239_Alv_MDM_h4),]))
 message(paste("Mock Donor 4 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(P239_Alv_MDM_h5[1:2,])) / mean(colSums(P239_Alv_MDM_h5[3:nrow(P239_Alv_MDM_h5),]))
+hiv <- mean(colSums(P239_Alv_MDM_h5[1:21,])) / mean(colSums(P239_Alv_MDM_h5[22:nrow(P239_Alv_MDM_h5),]))
 message(paste("GFP+ Donor 4 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(P239_Alv_MDM_h6[1:2,])) / mean(colSums(P239_Alv_MDM_h6[3:nrow(P239_Alv_MDM_h6),]))
+hiv <- mean(colSums(P239_Alv_MDM_h6[1:21,])) / mean(colSums(P239_Alv_MDM_h6[22:nrow(P239_Alv_MDM_h6),]))
 message(paste("GFP- Donor 4 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(M239_N239_Alv_h1[1:2,])) / mean(colSums(M239_N239_Alv_h1[3:nrow(M239_N239_Alv_h1),]))
+hiv <- mean(colSums(M239_N239_Alv_h1[1:21,])) / mean(colSums(M239_N239_Alv_h1[22:nrow(M239_N239_Alv_h1),]))
 message(paste("Mock Donor 5 HIV:",signif(hiv,3),"%"))
 
-hiv <- mean(colSums(M239_N239_Alv_h2[1:2,])) / mean(colSums(M239_N239_Alv_h2[3:nrow(M239_N239_Alv_h2),]))
+hiv <- mean(colSums(M239_N239_Alv_h2[1:21,])) / mean(colSums(M239_N239_Alv_h2[22:nrow(M239_N239_Alv_h2),]))
 message(paste("Mock Donor 5 HIV:",signif(hiv,3),"%"))
 
 ```
@@ -552,7 +556,7 @@ bystander6 -> alv_bystander4
 
 mdm_mock1 <- gex1_h1_d0 #MDMP236 MDMmock
 mdm_mock2 <- gex1_h1_d1 #MDMV236 MDMmock
-mdm_mock3<- gex2_h1 #MDMO236 MDMmock
+mdm_mock3 <- gex2_h1 #MDMO236 MDMmock
 mdm_mock4 <- P239_Alv_MDM_h1 #MDMP239 MDMmock
 
 alv_mock1 <- P239_Alv_MDM_h4 #AlvP239 AlvMDMmock
@@ -568,26 +572,66 @@ alv_active1 <- P239_Alv_MDM_h5 #AlvP239 AlvMDMactive
 alv_active2 <- M239_N239_Alv_h2 #AlvM239 AlvMDMactive
 alv_active3 <- M239_N239_Alv_h5 #AlvN239 AlvMDMactive
 
-mdm_latent1 <- gex1_h4_d0[,which(colSums(gex1_h4_d0[1:2,])/colSums(gex1_h4_d0)*1e6>=10)] #MDMP236 latent
-mdm_bystander1 <- gex1_h4_d0[,which(colSums(gex1_h4_d0[1:2,])/colSums(gex1_h4_d0)*1e6<10)] #MDMP236 bystander
+mdm_gfpneg1 <- colSums(gex1_h4_d0[1:21,])/colSums(gex1_h4_d0)*1e6
+mdm_gfpneg2 <- colSums(gex1_h4_d1[1:21,])/colSums(gex1_h4_d1)*1e6
+mdm_gfpneg3 <- colSums(gex2_h4[1:21,])/colSums(gex2_h4)*1e6
 
-mdm_latent2 <- gex1_h4_d1[,which(colSums(gex1_h4_d1[1:2,])/colSums(gex1_h4_d1)*1e6>=10)] #MDMV236 latent
-mdm_bystander2 <- gex1_h4_d1[,which(colSums(gex1_h4_d1[1:2,])/colSums(gex1_h4_d1)*1e6<10)] #MDMV236 bystander
+alv_gfpneg1 <- colSums(P239_Alv_MDM_h3[1:21,])/colSums(P239_Alv_MDM_h3)*1e6
+alv_gfpneg2 <- colSums(P239_Alv_MDM_h6[1:21,])/colSums(P239_Alv_MDM_h6)*1e6
+alv_gfpneg3 <- colSums(M239_N239_Alv_h3[1:21,])/colSums(M239_N239_Alv_h3)*1e6
+alv_gfpneg4 <- colSums(M239_N239_Alv_h6[1:21,])/colSums(M239_N239_Alv_h6)*1e6
 
-mdm_latent3 <- gex2_h4[,which(colSums(gex2_h4[1:2,])/colSums(gex2_h4)*1e6>=10)] #MDMO236 latent
-mdm_bystander3 <- gex2_h4[,which(colSums(gex2_h4[1:2,])/colSums(gex2_h4)*1e6<10)] #MDMO236 bystander
+gfp <- list("mdm_mock1"=colSums(mdm_mock1[1:21,])/colSums(mdm_mock1)*1e6 ,
+  "mdm_mock2"=colSums(mdm_mock2[1:21,])/colSums(mdm_mock2)*1e6 ,
+  "mdm_mock3"=colSums(mdm_mock3[1:21,])/colSums(mdm_mock3)*1e6 ,
+  "mdm_mock4"=colSums(mdm_mock4[1:21,])/colSums(mdm_mock4)*1e6 ,
+  "alv_mock1"=colSums(alv_mock1[1:21,])/colSums(alv_mock1)*1e6 ,
+  "alv_mock2"=colSums(alv_mock2[1:21,])/colSums(alv_mock2)*1e6 ,
+  "alv_mock3"=colSums(alv_mock3[1:21,])/colSums(alv_mock3)*1e6 ,
+  "mdm_active1"=colSums(mdm_active1[1:21,])/colSums(mdm_active1)*1e6,
+  "mdm_active2"=colSums(mdm_active2[1:21,])/colSums(mdm_active2)*1e6,
+  "mdm_active3"=colSums(mdm_active3[1:21,])/colSums(mdm_active3)*1e6,
+  "mdm_active4"=colSums(mdm_active4[1:21,])/colSums(mdm_active4)*1e6,
+  "alv_active1"=colSums(alv_active1[1:21,])/colSums(alv_active1)*1e6,
+  "alv_active2"=colSums(alv_active2[1:21,])/colSums(alv_active2)*1e6,
+  "alv_active3"=colSums(alv_active3[1:21,])/colSums(alv_active3)*1e6,
+  "mdm_gfpneg1"=colSums(gex1_h4_d0[1:21,])/colSums(gex1_h4_d0)*1e6,
+  "mdm_gfpneg2"=colSums(gex1_h4_d1[1:21,])/colSums(gex1_h4_d1)*1e6,
+  "mdm_gfpneg3"=colSums(gex2_h4[1:21,])/colSums(gex2_h4)*1e6,
+  "alv_gfpneg1"=colSums(P239_Alv_MDM_h3[1:21,])/colSums(P239_Alv_MDM_h3)*1e6,
+  "alv_gfpneg2"=colSums(P239_Alv_MDM_h6[1:21,])/colSums(P239_Alv_MDM_h6)*1e6,
+  "alv_gfpneg3"=colSums(M239_N239_Alv_h3[1:21,])/colSums(M239_N239_Alv_h3)*1e6,
+  "alv_gfpneg4"=colSums(M239_N239_Alv_h6[1:21,])/colSums(M239_N239_Alv_h6)*1e6)
 
-alv_latent1 <- P239_Alv_MDM_h3[,which(colSums(P239_Alv_MDM_h3[1:2,])/colSums(P239_Alv_MDM_h3)*1e6>=10)] #MDMP239 latent
-alv_bystander1 <- P239_Alv_MDM_h3[,which(colSums(P239_Alv_MDM_h3[1:2,])/colSums(P239_Alv_MDM_h3)*1e6<10)] #MDMP239 bystander
+#vioplot(gfp,horizontal=TRUE)
+par(mar=c(7.1, 4.1, 4.1, 2.1))
 
-alv_latent2 <- P239_Alv_MDM_h6[,which(colSums(P239_Alv_MDM_h6[1:2,])/colSums(P239_Alv_MDM_h6)*1e6>=10)] #AlvP239 latent
-alv_bystander2 <- P239_Alv_MDM_h6[,which(colSums(P239_Alv_MDM_h6[1:2,])/colSums(P239_Alv_MDM_h6)*1e6<10)] #AlvP239 bystander
+lgfp <- lapply(gfp,function(x) { log10(x+1) } )
+boxplot(lgfp,col="white",cex=0,las=2,border="darkgray",ylab="log10 RPM HIV")
+beeswarm(lgfp,add=TRUE,pch=1,cex=0.1)
 
-alv_latent3 <- M239_N239_Alv_h3[,which(colSums(M239_N239_Alv_h3[1:2,])/colSums(M239_N239_Alv_h3)*1e6>=10)] #AlvM239 latent
-alv_bystander3 <- M239_N239_Alv_h3[,which(colSums(M239_N239_Alv_h3[1:2,])/colSums(M239_N239_Alv_h3)*1e6<10)] #AlvM239 bystander
+par(mar=c(5.1, 4.1, 4.1, 2.1))
 
-alv_latent4 <- M239_N239_Alv_h6[,which(colSums(M239_N239_Alv_h6[1:2,])/colSums(M239_N239_Alv_h6)*1e6>=10)] #AlvN239 latent
-alv_bystander4 <- M239_N239_Alv_h6[,which(colSums(M239_N239_Alv_h6[1:2,])/colSums(M239_N239_Alv_h6)*1e6<10)] #AlvN239 bystander
+mdm_latent1 <- gex1_h4_d0[,which(colSums(gex1_h4_d0[1:21,])/colSums(gex1_h4_d0)*1e6>=10)] #MDMP236 latent
+mdm_bystander1 <- gex1_h4_d0[,which(colSums(gex1_h4_d0[1:21,])/colSums(gex1_h4_d0)*1e6<10)] #MDMP236 bystander
+
+mdm_latent2 <- gex1_h4_d1[,which(colSums(gex1_h4_d1[1:21,])/colSums(gex1_h4_d1)*1e6>=10)] #MDMV236 latent
+mdm_bystander2 <- gex1_h4_d1[,which(colSums(gex1_h4_d1[1:21,])/colSums(gex1_h4_d1)*1e6<10)] #MDMV236 bystander
+
+mdm_latent3 <- gex2_h4[,which(colSums(gex2_h4[1:21,])/colSums(gex2_h4)*1e6>=10)] #MDMO236 latent
+mdm_bystander3 <- gex2_h4[,which(colSums(gex2_h4[1:21,])/colSums(gex2_h4)*1e6<10)] #MDMO236 bystander
+
+alv_latent1 <- P239_Alv_MDM_h3[,which(colSums(P239_Alv_MDM_h3[1:21,])/colSums(P239_Alv_MDM_h3)*1e6>=10)] #MDMP239 latent
+alv_bystander1 <- P239_Alv_MDM_h3[,which(colSums(P239_Alv_MDM_h3[1:21,])/colSums(P239_Alv_MDM_h3)*1e6<10)] #MDMP239 bystander
+
+alv_latent2 <- P239_Alv_MDM_h6[,which(colSums(P239_Alv_MDM_h6[1:21,])/colSums(P239_Alv_MDM_h6)*1e6>=10)] #AlvP239 latent
+alv_bystander2 <- P239_Alv_MDM_h6[,which(colSums(P239_Alv_MDM_h6[1:21,])/colSums(P239_Alv_MDM_h6)*1e6<10)] #AlvP239 bystander
+
+alv_latent3 <- M239_N239_Alv_h3[,which(colSums(M239_N239_Alv_h3[1:21,])/colSums(M239_N239_Alv_h3)*1e6>=10)] #AlvM239 latent
+alv_bystander3 <- M239_N239_Alv_h3[,which(colSums(M239_N239_Alv_h3[1:21,])/colSums(M239_N239_Alv_h3)*1e6<10)] #AlvM239 bystander
+
+alv_latent4 <- M239_N239_Alv_h6[,which(colSums(M239_N239_Alv_h6[1:21,])/colSums(M239_N239_Alv_h6)*1e6>=10)] #AlvN239 latent
+alv_bystander4 <- M239_N239_Alv_h6[,which(colSums(M239_N239_Alv_h6[1:21,])/colSums(M239_N239_Alv_h6)*1e6<10)] #AlvN239 bystander
 
 react6 <- N239Alv_react_counts #AlvN239
 
