@@ -573,7 +573,7 @@ alv_active3 <- M239_N239_Alv_h5 #AlvN239 AlvMDMactive
 mdm_gfpneg1 <- colSums(gex1_h4_d0[1:21,])/colSums(gex1_h4_d0)*1e6
 mdm_gfpneg2 <- colSums(gex1_h4_d1[1:21,])/colSums(gex1_h4_d1)*1e6
 mdm_gfpneg3 <- colSums(gex2_h4[1:21,])/colSums(gex2_h4)*1e6
-mdm_gfpneg3 <- colSums(P239_Alv_MDM_h3[1:21,])/colSums(P239_Alv_MDM_h3)*1e6
+mdm_gfpneg4 <- colSums(P239_Alv_MDM_h3[1:21,])/colSums(P239_Alv_MDM_h3)*1e6
 
 alv_gfpneg1 <- colSums(P239_Alv_MDM_h6[1:21,])/colSums(P239_Alv_MDM_h6)*1e6
 alv_gfpneg2 <- colSums(M239_N239_Alv_h3[1:21,])/colSums(M239_N239_Alv_h3)*1e6
@@ -608,7 +608,7 @@ boxplot(lgfp,col="white",cex=0,las=2,border="darkgray",ylab="log10+1 RPM",main="
 boxplot(lgfp,col="white",cex=0,las=2,border="darkgray",ylab="log10+1 RPM",main="All HIV genes")
 beeswarm(lgfp,add=TRUE,pch=1,cex=0.1)
 
-lapply(1:21, function(i) {
+nullres <- lapply(1:21, function(i) {
 
   gfp <- list("mdm_mock1"=mdm_mock1[i,]/colSums(mdm_mock1)*1e6 ,
     "mdm_mock2"=mdm_mock2[i,]/colSums(mdm_mock2)*1e6 ,
