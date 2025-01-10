@@ -804,6 +804,7 @@ alv_latent3 <- M239_N239_Alv_h6[,which(a3n>=MAX)] #AlvN239 latent
 alv_bystander3 <- M239_N239_Alv_h6[,which(a3n<MAX)] #AlvN239 bystander
 
 #dev.off()
+par(mfrow=c(1,1))
 
 react6 <- N239Alv_react_counts #AlvN239
 
@@ -926,6 +927,8 @@ vioplot(mt)
 
 boxplot(mt,horizontal=TRUE,cex=0,col="white",las=1,
  main="mtDNA gene proportion")
+
+par(mar = c(5.1, 9.1, 4.1, 2.1))
 
 barplot(sapply(mt, function(x) { length(which(x>0.2))/length(x) } ),horiz=TRUE,las=1, main="Proportion of cells with >15% mito reads")
 
