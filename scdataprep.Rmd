@@ -395,7 +395,7 @@ dim(gex1_h4_d1)
 
 ## Which is female or male?
 
-Let's look at the expression of genes on sex cheomosomes.
+Let's look at the expression of genes on sex chromosomes.
 
 BTW here's the bash script to get the chr2gene tsv file:
 
@@ -454,8 +454,6 @@ Therefore donor 0 is female and 1 is male.
 HIV genes are rows 1 to 21.
 
 ```{r,checkhiv}
-
-blah()
 
 hiv <- mean(colSums(gex1_h1_d0[1:21,])) / mean(colSums(gex1_h1_d0[22:nrow(gex1_h1_d0),]))
 message(paste("Mock Donor 0 HIV:",signif(hiv,3),"%"))
@@ -537,22 +535,22 @@ active6 -> alv_active3
 latent0 -> mdm_latent1
 latent1 -> mdm_latent2
 latent2 -> mdm_latent3
+latent3 -> mdm_latent4
 
-latent3 -> alv_latent1
-latent4 -> alv_latent2
-latent5 -> alv_latent3
-latent6 -> alv_latent4
+latent4 -> alv_latent1
+latent5 -> alv_latent2
+latent6 -> alv_latent3
 
 bystander0 -> mdm_bystander1
 bystander1 -> mdm_bystander2
 bystander2 -> mdm_bystander3
+bystander3 -> mdm_bystander4
 
-bystander3 -> alv_bystander1
-bystander4 -> alv_bystander2
-bystander5 -> alv_bystander3
-bystander6 -> alv_bystander4
+bystander4 -> alv_bystander1
+bystander5 -> alv_bystander2
+bystander6 -> alv_bystander3
 
-```{r,rename1}
+```{r,rename1,fig.height=9}
 
 mdm_mock1 <- gex1_h1_d0 #MDMP236 MDMmock
 mdm_mock2 <- gex1_h1_d1 #MDMV236 MDMmock
@@ -575,11 +573,11 @@ alv_active3 <- M239_N239_Alv_h5 #AlvN239 AlvMDMactive
 mdm_gfpneg1 <- colSums(gex1_h4_d0[1:21,])/colSums(gex1_h4_d0)*1e6
 mdm_gfpneg2 <- colSums(gex1_h4_d1[1:21,])/colSums(gex1_h4_d1)*1e6
 mdm_gfpneg3 <- colSums(gex2_h4[1:21,])/colSums(gex2_h4)*1e6
+mdm_gfpneg3 <- colSums(P239_Alv_MDM_h3[1:21,])/colSums(P239_Alv_MDM_h3)*1e6
 
-alv_gfpneg1 <- colSums(P239_Alv_MDM_h3[1:21,])/colSums(P239_Alv_MDM_h3)*1e6
-alv_gfpneg2 <- colSums(P239_Alv_MDM_h6[1:21,])/colSums(P239_Alv_MDM_h6)*1e6
-alv_gfpneg3 <- colSums(M239_N239_Alv_h3[1:21,])/colSums(M239_N239_Alv_h3)*1e6
-alv_gfpneg4 <- colSums(M239_N239_Alv_h6[1:21,])/colSums(M239_N239_Alv_h6)*1e6
+alv_gfpneg1 <- colSums(P239_Alv_MDM_h6[1:21,])/colSums(P239_Alv_MDM_h6)*1e6
+alv_gfpneg2 <- colSums(M239_N239_Alv_h3[1:21,])/colSums(M239_N239_Alv_h3)*1e6
+alv_gfpneg3 <- colSums(M239_N239_Alv_h6[1:21,])/colSums(M239_N239_Alv_h6)*1e6
 
 gfp <- list("mdm_mock1"=colSums(mdm_mock1[1:21,])/colSums(mdm_mock1)*1e6 ,
   "mdm_mock2"=colSums(mdm_mock2[1:21,])/colSums(mdm_mock2)*1e6 ,
@@ -598,40 +596,214 @@ gfp <- list("mdm_mock1"=colSums(mdm_mock1[1:21,])/colSums(mdm_mock1)*1e6 ,
   "mdm_gfpneg1"=colSums(gex1_h4_d0[1:21,])/colSums(gex1_h4_d0)*1e6,
   "mdm_gfpneg2"=colSums(gex1_h4_d1[1:21,])/colSums(gex1_h4_d1)*1e6,
   "mdm_gfpneg3"=colSums(gex2_h4[1:21,])/colSums(gex2_h4)*1e6,
-  "alv_gfpneg1"=colSums(P239_Alv_MDM_h3[1:21,])/colSums(P239_Alv_MDM_h3)*1e6,
-  "alv_gfpneg2"=colSums(P239_Alv_MDM_h6[1:21,])/colSums(P239_Alv_MDM_h6)*1e6,
-  "alv_gfpneg3"=colSums(M239_N239_Alv_h3[1:21,])/colSums(M239_N239_Alv_h3)*1e6,
-  "alv_gfpneg4"=colSums(M239_N239_Alv_h6[1:21,])/colSums(M239_N239_Alv_h6)*1e6)
+  "mdm_gfpneg4"=colSums(P239_Alv_MDM_h3[1:21,])/colSums(P239_Alv_MDM_h3)*1e6,
+  "alv_gfpneg1"=colSums(P239_Alv_MDM_h6[1:21,])/colSums(P239_Alv_MDM_h6)*1e6,
+  "alv_gfpneg2"=colSums(M239_N239_Alv_h3[1:21,])/colSums(M239_N239_Alv_h3)*1e6,
+  "alv_gfpneg3"=colSums(M239_N239_Alv_h6[1:21,])/colSums(M239_N239_Alv_h6)*1e6)
 
-#vioplot(gfp,horizontal=TRUE)
 par(mar=c(7.1, 4.1, 4.1, 2.1))
 
 lgfp <- lapply(gfp,function(x) { log10(x+1) } )
-boxplot(lgfp,col="white",cex=0,las=2,border="darkgray",ylab="log10 RPM HIV")
+boxplot(lgfp,col="white",cex=0,las=2,border="darkgray",ylab="log10+1 RPM",main="All HIV genes")
+boxplot(lgfp,col="white",cex=0,las=2,border="darkgray",ylab="log10+1 RPM",main="All HIV genes")
 beeswarm(lgfp,add=TRUE,pch=1,cex=0.1)
+
+lapply(1:21, function(i) {
+
+  gfp <- list("mdm_mock1"=mdm_mock1[i,]/colSums(mdm_mock1)*1e6 ,
+    "mdm_mock2"=mdm_mock2[i,]/colSums(mdm_mock2)*1e6 ,
+    "mdm_mock3"=mdm_mock3[i,]/colSums(mdm_mock3)*1e6 ,
+    "mdm_mock4"=mdm_mock4[i,]/colSums(mdm_mock4)*1e6 ,
+    "alv_mock1"=alv_mock1[i,]/colSums(alv_mock1)*1e6 ,
+    "alv_mock2"=alv_mock2[i,]/colSums(alv_mock2)*1e6 ,
+    "alv_mock3"=alv_mock3[i,]/colSums(alv_mock3)*1e6 ,
+    "mdm_active1"=mdm_active1[i,]/colSums(mdm_active1)*1e6,
+    "mdm_active2"=mdm_active2[i,]/colSums(mdm_active2)*1e6,
+    "mdm_active3"=mdm_active3[i,]/colSums(mdm_active3)*1e6,
+    "mdm_active4"=mdm_active4[i,]/colSums(mdm_active4)*1e6,
+    "alv_active1"=alv_active1[i,]/colSums(alv_active1)*1e6,
+    "alv_active2"=alv_active2[i,]/colSums(alv_active2)*1e6,
+    "alv_active3"=alv_active3[i,]/colSums(alv_active3)*1e6,
+    "mdm_gfpneg1"=gex1_h4_d0[i,]/colSums(gex1_h4_d0)*1e6,
+    "mdm_gfpneg2"=gex1_h4_d1[i,]/colSums(gex1_h4_d1)*1e6,
+    "mdm_gfpneg3"=gex2_h4[i,]/colSums(gex2_h4)*1e6,
+    "mdm_gfpneg4"=P239_Alv_MDM_h3[i,]/colSums(P239_Alv_MDM_h3)*1e6,
+    "alv_gfpneg1"=P239_Alv_MDM_h6[i,]/colSums(P239_Alv_MDM_h6)*1e6,
+    "alv_gfpneg2"=M239_N239_Alv_h3[i,]/colSums(M239_N239_Alv_h3)*1e6,
+    "alv_gfpneg3"=M239_N239_Alv_h6[i,]/colSums(M239_N239_Alv_h6)*1e6)
+
+  lgfp <- lapply(gfp,function(x) { log10(x+1) } )
+  boxplot(lgfp,col="white",cex=0,las=2,border="darkgray",ylab="log10+1 RPM", main=rownames(mdm_mock1)[i])
+  boxplot(lgfp,col="white",cex=0,las=2,border="darkgray",ylab="log10+1 RPM", main=rownames(mdm_mock1)[i])
+  beeswarm(lgfp,add=TRUE,pch=1,cex=0.1)
+})
 
 par(mar=c(5.1, 4.1, 4.1, 2.1))
 
-mdm_latent1 <- gex1_h4_d0[,which(colSums(gex1_h4_d0[1:21,])/colSums(gex1_h4_d0)*1e6>=10)] #MDMP236 latent
-mdm_bystander1 <- gex1_h4_d0[,which(colSums(gex1_h4_d0[1:21,])/colSums(gex1_h4_d0)*1e6<10)] #MDMP236 bystander
+#pdf("latent_threshold.pdf",width=7,height=9)
 
-mdm_latent2 <- gex1_h4_d1[,which(colSums(gex1_h4_d1[1:21,])/colSums(gex1_h4_d1)*1e6>=10)] #MDMV236 latent
-mdm_bystander2 <- gex1_h4_d1[,which(colSums(gex1_h4_d1[1:21,])/colSums(gex1_h4_d1)*1e6<10)] #MDMV236 bystander
+# mdm1 mock vs active
+m1a <- log10( colSums(mdm_active1[1:21,]) / colSums(mdm_active1) *1e6 )
+m1m <- log10( colSums(mdm_mock1[1:21,]) / colSums(mdm_mock1) *1e6 )
+m1n <- log10(colSums(gex1_h4_d0[1:21,]) / colSums(gex1_h4_d0) *1e6)
+myrange <- seq(1,6,0.1)
+m1res <- sapply( myrange , function(j) {
+  ( length(which(m1m < j))/length(m1m) + length(which(m1a >= j))/length(m1a) ) / 2  }
+)
+names(m1res) <- myrange
+MAX=as.numeric(names(m1res[order(-m1res)][1]))
+MAXVAL=signif(m1res[order(-m1res)][1],3)
+par(mfrow=c(4,1))
+hist( m1m , main="MDM1 mock" , xlab="log10 HIV RPM", xlim=c(1,6), breaks=25)
+hist( m1a , main="MDM1 active", xlab="log10 HIV RPM", xlim=c(1,6), breaks=35)
+plot(myrange,m1res,type="b",main="Best partition",xlab="log10 HIV RPM",bty="n")
+abline(v=MAX,col="red")
+mtext(paste("Max=",MAXVAL,"@",MAX),cex=0.7)
+hist( m1n , main="MDM1 GFP-", xlab="log10 HIV RPM", xlim=c(1,6), breaks=35)
+abline(v=MAX,col="red")
+mtext(paste(as.character(table(m1n>=MAX)), collapse=" "),cex=0.7)
+mdm_latent1 <- gex1_h4_d0[,which(m1n>=MAX)] #MDMP236 latent
+mdm_bystander1 <- gex1_h4_d0[,which(m1n<MAX)] #MDMP236 bystander
 
-mdm_latent3 <- gex2_h4[,which(colSums(gex2_h4[1:21,])/colSums(gex2_h4)*1e6>=10)] #MDMO236 latent
-mdm_bystander3 <- gex2_h4[,which(colSums(gex2_h4[1:21,])/colSums(gex2_h4)*1e6<10)] #MDMO236 bystander
+# mdm2 mock vs active
+m2a <- log10( colSums(mdm_active2[1:21,]) / colSums(mdm_active2) *1e6 )
+m2m <- log10( colSums(mdm_mock2[1:21,]) / colSums(mdm_mock2) *1e6 )
+m2n <- log10( colSums(gex1_h4_d1[1:21,]) / colSums(gex1_h4_d1) *1e6)
+myrange <- seq(1,6,0.1)
+m2res <- sapply( myrange , function(j) {
+  ( length(which(m2m < j))/length(m2m) + length(which(m2a >= j))/length(m2a) ) / 2  }
+)
+names(m2res) <- myrange
+MAX=as.numeric(names(m2res[order(-m2res)][1]))
+MAXVAL=signif(m2res[order(-m2res)][1],3)
+par(mfrow=c(4,1))
+hist( m2m , main="MDM2 mock" , xlab="log10 HIV RPM", xlim=c(1,6), breaks=25)
+hist( m2a , main="MDM2 active", xlab="log10 HIV RPM", xlim=c(1,6), breaks=25)
+plot(myrange,m2res,type="b",main="Best partition",xlab="log10 HIV RPM",bty="n")
+abline(v=MAX,col="red")
+mtext(paste("Max=",MAXVAL,"@",MAX),cex=0.7)
+hist( m2n , main="MDM2 GFP-", xlab="log10 HIV RPM", xlim=c(1,6), breaks=35)
+abline(v=MAX,col="red")
+mtext(paste(as.character(table(m2n>=MAX)), collapse=" "),cex=0.7)
+mdm_latent2 <- gex1_h4_d1[,which(m2n>=MAX)] #MDMV236 latent
+mdm_bystander2 <- gex1_h4_d1[,which(m2n<MAX)] #MDMV236 bystander
 
-alv_latent1 <- P239_Alv_MDM_h3[,which(colSums(P239_Alv_MDM_h3[1:21,])/colSums(P239_Alv_MDM_h3)*1e6>=10)] #MDMP239 latent
-alv_bystander1 <- P239_Alv_MDM_h3[,which(colSums(P239_Alv_MDM_h3[1:21,])/colSums(P239_Alv_MDM_h3)*1e6<10)] #MDMP239 bystander
+# mdm3 mock vs active
+m3a <- log10( colSums(mdm_active3[1:21,]) / colSums(mdm_active3) *1e6 )
+m3m <- log10( colSums(mdm_mock3[1:21,]) / colSums(mdm_mock3) *1e6 )
+m3n <- log10( colSums(gex2_h4[1:21,]) / colSums(gex2_h4) *1e6)
+myrange <- seq(1,6,0.1)
+m3res <- sapply( myrange , function(j) {
+  ( length(which(m3m < j))/length(m3m) + length(which(m3a >= j))/length(m3a) ) / 2  }
+)
+names(m3res) <- myrange
+MAX=as.numeric(names(m3res[order(-m3res)][1]))
+MAXVAL=signif(m3res[order(-m3res)][1],3)
+par(mfrow=c(4,1))
+hist( m3m , main="MDM3 mock" , xlab="log10 HIV RPM", xlim=c(1,6), breaks=25)
+hist( m3a , main="MDM3 active", xlab="log10 HIV RPM", xlim=c(1,6), breaks=35)
+plot(myrange,m3res,type="b",main="Best partition",xlab="log10 HIV RPM",bty="n")
+abline(v=MAX,col="red")
+mtext(paste("Max=",MAXVAL,"@",MAX),cex=0.7)
+hist( m3n , main="MDM3 GFP-", xlab="log10 HIV RPM", xlim=c(1,6), breaks=35)
+abline(v=MAX,col="red")
+mtext(paste(as.character(table(m3n>=MAX)), collapse=" "),cex=0.7)
+mdm_latent3 <- gex2_h4[,which(m3n>=MAX)] #MDMO236 latent
+mdm_bystander3 <- gex2_h4[,which(m3n<MAX)] #MDMO236 bystander
 
-alv_latent2 <- P239_Alv_MDM_h6[,which(colSums(P239_Alv_MDM_h6[1:21,])/colSums(P239_Alv_MDM_h6)*1e6>=10)] #AlvP239 latent
-alv_bystander2 <- P239_Alv_MDM_h6[,which(colSums(P239_Alv_MDM_h6[1:21,])/colSums(P239_Alv_MDM_h6)*1e6<10)] #AlvP239 bystander
+# mdm4 mock vs active
+m4a <- log10( colSums(mdm_active4[1:21,]) / colSums(mdm_active4) *1e6 )
+m4m <- log10( colSums(mdm_mock4[1:21,]) / colSums(mdm_mock4) *1e6 )
+m4n <- log10( colSums(P239_Alv_MDM_h3[1:21,]) / colSums(P239_Alv_MDM_h3) *1e6)
+myrange <- seq(1,6,0.1)
+m4res <- sapply( myrange , function(j) {
+  ( length(which(m4m < j))/length(m4m) + length(which(m4a >= j))/length(m4a) ) / 2  }
+)
+names(m4res) <- myrange
+MAX=as.numeric(names(m4res[order(-m4res)][1]))
+MAXVAL=signif(m4res[order(-m4res)][1],3)
+par(mfrow=c(4,1))
+hist( m4m , main="MDM4 mock" , xlab="log10 HIV RPM", xlim=c(1,6), breaks=25)
+hist( m4a , main="MDM4 active", xlab="log10 HIV RPM", xlim=c(1,6), breaks=35)
+plot(myrange,m4res,type="b",main="Best partition",xlab="log10 HIV RPM",bty="n")
+abline(v=MAX,col="red")
+mtext(paste("Max=",MAXVAL,"@",MAX),cex=0.7)
+hist( m4n , main="MDM4 GFP-", xlab="log10 HIV RPM", xlim=c(1,6), breaks=35)
+abline(v=MAX,col="red")
+mtext(paste(as.character(table(m4n>=MAX)), collapse=" "),cex=0.7)
+mdm_latent4 <- P239_Alv_MDM_h3[,which(m4n>=MAX)] #MDMP239 latent
+mdm_bystander4 <- P239_Alv_MDM_h3[,which(m4n<MAX)] #MDMP239 bystander
 
-alv_latent3 <- M239_N239_Alv_h3[,which(colSums(M239_N239_Alv_h3[1:21,])/colSums(M239_N239_Alv_h3)*1e6>=10)] #AlvM239 latent
-alv_bystander3 <- M239_N239_Alv_h3[,which(colSums(M239_N239_Alv_h3[1:21,])/colSums(M239_N239_Alv_h3)*1e6<10)] #AlvM239 bystander
+# alv1 mock vs active
+a1a <- log10( colSums(alv_active1[1:21,]) / colSums(alv_active1) *1e6 )
+a1m <- log10( colSums(alv_mock1[1:21,]) / colSums(alv_mock1) *1e6 )
+a1n <- log10( colSums(P239_Alv_MDM_h6[1:21,]) / colSums(P239_Alv_MDM_h6) *1e6)
+myrange <- seq(1,6,0.1)
+a1res <- sapply( myrange , function(j) {
+  ( length(which(a1m < j))/length(a1m) + length(which(a1a >= j))/length(a1a) ) / 2  }
+)
+names(a1res) <- myrange
+MAX=as.numeric(names(a1res[order(-a1res)][1]))
+MAXVAL=signif(a1res[order(-a1res)][1],3)
+par(mfrow=c(4,1))
+hist( a1m , main="Alv1 mock" , xlab="log10 HIV RPM", xlim=c(1,6), breaks=25)
+hist( a1a , main="Alv1 active", xlab="log10 HIV RPM", xlim=c(1,6), breaks=35)
+plot(myrange,a1res,type="b",main="Best partition",xlab="log10 HIV RPM",bty="n")
+abline(v=MAX,col="red")
+mtext(paste("Max=",MAXVAL,"@",MAX),cex=0.7)
+hist( a1n , main="Alv1 GFP-", xlab="log10 HIV RPM", xlim=c(1,6), breaks=35)
+abline(v=MAX,col="red")
+mtext(paste(as.character(table(a1n>=MAX)), collapse=" "),cex=0.7)
+alv_latent1 <- P239_Alv_MDM_h6[,which(a1n>=MAX)] #AlvP239 latent
+alv_bystander1 <- P239_Alv_MDM_h6[,which(a1n<MAX)] #AlvP239 bystander
 
-alv_latent4 <- M239_N239_Alv_h6[,which(colSums(M239_N239_Alv_h6[1:21,])/colSums(M239_N239_Alv_h6)*1e6>=10)] #AlvN239 latent
-alv_bystander4 <- M239_N239_Alv_h6[,which(colSums(M239_N239_Alv_h6[1:21,])/colSums(M239_N239_Alv_h6)*1e6<10)] #AlvN239 bystander
+# alv2 mock vs active
+a2a <- log10( colSums(alv_active2[1:21,]) / colSums(alv_active2) *1e6 )
+a2m <- log10( colSums(alv_mock2[1:21,]) / colSums(alv_mock2) *1e6 )
+a2n <- log10( colSums(M239_N239_Alv_h3[1:21,]) / colSums(M239_N239_Alv_h3) *1e6)
+myrange <- seq(1,6,0.1)
+a2res <- sapply( myrange , function(j) {
+  ( length(which(a2m < j))/length(a2m) + length(which(a2a >= j))/length(a2a) ) / 2  }
+)
+names(a2res) <- myrange
+MAX=as.numeric(names(a2res[order(-a2res)][1]))
+MAXVAL=signif(a2res[order(-a2res)][1],3)
+par(mfrow=c(4,1))
+hist( a2m , main="Alv2 mock" , xlab="log10 HIV RPM", xlim=c(1,6), breaks=25)
+hist( a2a , main="Alv2 active", xlab="log10 HIV RPM", xlim=c(1,6), breaks=35)
+plot(myrange,a2res,type="b",main="Best partition",xlab="log10 HIV RPM",bty="n")
+abline(v=MAX,col="red")
+mtext(paste("Max=",MAXVAL,"@",MAX),cex=0.7)
+hist( a2n , main="Alv2 GFP-", xlab="log10 HIV RPM", xlim=c(1,6), breaks=35)
+abline(v=MAX,col="red")
+mtext(paste(as.character(table(a2n>=MAX)), collapse=" "),cex=0.7)
+alv_latent2 <- M239_N239_Alv_h3[,which(a2n>=MAX)] #AlvM239 latent
+alv_bystander2 <- M239_N239_Alv_h3[,which(a2n<MAX)] #AlvM239 bystander
+
+# alv3 mock vs active
+a3a <- log10( colSums(alv_active3[1:21,]) / colSums(alv_active3) *1e6 )
+a3m <- log10( colSums(alv_mock3[1:21,]) / colSums(alv_mock3) *1e6 )
+a3n <- log10( colSums(M239_N239_Alv_h6[1:21,]) / colSums(M239_N239_Alv_h6) *1e6)
+myrange <- seq(1,6,0.1)
+a3res <- sapply( myrange , function(j) {
+  ( length(which(a3m < j))/length(a3m) + length(which(a3a >= j))/length(a3a) ) / 2  }
+)
+names(a3res) <- myrange
+MAX=as.numeric(names(a3res[order(-a3res)][1]))
+MAXVAL=signif(a3res[order(-a3res)][1],3)
+par(mfrow=c(4,1))
+hist( a3m , main="Alv3 mock" , xlab="log10 HIV RPM", xlim=c(1,6), breaks=25)
+hist( a3a , main="Alv3 active", xlab="log10 HIV RPM", xlim=c(1,6), breaks=35)
+plot(myrange,a3res,type="b",main="Best partition",xlab="log10 HIV RPM",bty="n")
+abline(v=MAX,col="red")
+mtext(paste("Max=",MAXVAL,"@",MAX),cex=0.7)
+hist( a3n , main="Alv3 GFP-", xlab="log10 HIV RPM", xlim=c(1,6), breaks=35)
+abline(v=MAX,col="red")
+mtext(paste(as.character(table(a3n>=MAX)), collapse=" "),cex=0.7)
+alv_latent3 <- M239_N239_Alv_h6[,which(a3n>=MAX)] #AlvN239 latent
+alv_bystander3 <- M239_N239_Alv_h6[,which(a3n<MAX)] #AlvN239 bystander
+
+#dev.off()
 
 react6 <- N239Alv_react_counts #AlvN239
 
@@ -655,33 +827,34 @@ colnames(alv_active3) <- paste("alv_active3|",colnames(alv_active3),sep="")
 colnames(mdm_bystander1) <- paste("mdm_bystander1|",colnames(mdm_bystander1),sep="")
 colnames(mdm_bystander2) <- paste("mdm_bystander2|",colnames(mdm_bystander2),sep="")
 colnames(mdm_bystander3) <- paste("mdm_bystander3|",colnames(mdm_bystander3),sep="")
+colnames(mdm_bystander4) <- paste("mdm_bystander4|",colnames(mdm_bystander4),sep="")
 
 colnames(alv_bystander1) <- paste("alv_bystander1|",colnames(alv_bystander1),sep="")
 colnames(alv_bystander2) <- paste("alv_bystander2|",colnames(alv_bystander2),sep="")
 colnames(alv_bystander3) <- paste("alv_bystander3|",colnames(alv_bystander3),sep="")
-colnames(alv_bystander4) <- paste("alv_bystander4|",colnames(alv_bystander4),sep="")
 
 colnames(mdm_latent1) <- paste("mdm_latent1|",colnames(mdm_latent1),sep="")
 colnames(mdm_latent2) <- paste("mdm_latent2|",colnames(mdm_latent2),sep="")
 colnames(mdm_latent3) <- paste("mdm_latent3|",colnames(mdm_latent3),sep="")
+colnames(mdm_latent4) <- paste("mdm_latent4|",colnames(mdm_latent4),sep="")
 
 colnames(alv_latent1) <- paste("alv_latent1|",colnames(alv_latent1),sep="")
 colnames(alv_latent2) <- paste("alv_latent2|",colnames(alv_latent2),sep="")
 colnames(alv_latent3) <- paste("alv_latent3|",colnames(alv_latent3),sep="")
-colnames(alv_latent4) <- paste("alv_latent4|",colnames(alv_latent4),sep="")
 
 colnames(react6) <- paste("react6|",colnames(react6),sep="")
 
 mylist <- list(mdm_mock1,mdm_mock2,mdm_mock3,mdm_mock4,alv_mock1,alv_mock2,alv_mock3,
   mdm_active1,mdm_active2,mdm_active3,mdm_active4,alv_active1,alv_active2,alv_active3,
-  mdm_latent1,mdm_latent2,mdm_latent3,alv_latent1,alv_latent2,alv_latent3,alv_latent4,
-  mdm_bystander1,mdm_bystander2,mdm_bystander3,alv_bystander1,alv_bystander2,alv_bystander3,alv_bystander4,
-  react6)
+  mdm_latent1,mdm_latent2,mdm_latent3,mdm_latent4,alv_latent1,alv_latent2,alv_latent3,
+  mdm_bystander1,mdm_bystander2,mdm_bystander3,mdm_bystander4,alv_bystander1,
+  alv_bystander2,alv_bystander3,react6)
 
-names(mylist) <- c("mdm_mock1","mdm_mock2","mdm_mock3","mdm_mock4","alv_mock1","alv_mock2","alv_mock3",
-  "mdm_active1","mdm_active2","mdm_active3","mdm_active4","alv_active1","alv_active2","alv_active3",
-  "mdm_latent1","mdm_latent2","mdm_latent3","alv_latent1","alv_latent2","mdm_latent3","alv_latent4",
-  "mdm_bystander1","mdm_bystander2","mdm_bystander3","alv_bystander1","alv_bystander2","alv_bystander3","alv_bystander4",
+names(mylist) <- c("mdm_mock1","mdm_mock2","mdm_mock3","mdm_mock4","alv_mock1","alv_mock2",
+  "alv_mock3", "mdm_active1","mdm_active2","mdm_active3","mdm_active4","alv_active1",
+  "alv_active2","alv_active3", "mdm_latent1","mdm_latent2","mdm_latent3","mdm_latent4",
+  "alv_latent1","mdm_latent2","alv_latent3", "mdm_bystander1","mdm_bystander2",
+  "mdm_bystander3","mdm_bystander4","alv_bystander1","alv_bystander2","alv_bystander3",
   "react6")
 
 comb <- do.call(cbind,mylist)
@@ -693,7 +866,8 @@ rev(sapply(mylist,function(mx) {sum(colSums(mx))}))
 
 par(mar = c(5.1, 10.1, 4.1, 2.1))
 
-barplot(rev(sapply(mylist,function(mx) {sum(colSums(mx))})),horiz=TRUE,las=1,xlab="no. counts")
+barplot(rev(sapply(mylist,function(mx) {sum(colSums(mx))})),
+  horiz=TRUE,las=1,xlab="no. counts")
 
 res <- rev(sapply(mylist,function(mx) {
   mean(colSums(mx[1:2,])) /  mean(colSums(mx[3:nrow(mx),])) *100
@@ -739,6 +913,8 @@ barplot(rev(chrmt),horiz=TRUE,las=1,xlab="% chrM reads")
 
 Let's take a look at mtDNA transcripts at the level of individual cells.
 
+Remove cells with >20% mito reads.
+
 ```{r,chrmtbycell}
 
 mt <- lapply(mylist, function(x) {
@@ -751,22 +927,28 @@ vioplot(mt)
 boxplot(mt,horizontal=TRUE,cex=0,col="white",las=1,
  main="mtDNA gene proportion")
 
-barplot(sapply(mt, function(x) { length(which(x>0.15))/length(x) } ),horiz=TRUE,las=1)
-
-barplot(sapply(mt, function(x) { length(which(x>0.15))/length(x) } ),horiz=TRUE,las=1, main="Proportion of cells with >15% mito reads")
+barplot(sapply(mt, function(x) { length(which(x>0.2))/length(x) } ),horiz=TRUE,las=1, main="Proportion of cells with >15% mito reads")
 
 fmt <- lapply(mylist, function(x) {
   xmt <- x[grep("MT-",rownames(x)),]
   v <- sapply(1:ncol(x), function(j) { sum(xmt[,j])/sum(x[,j]) } )
-  f <-  x[,which(v<0.15)]
+  f <-  x[,which(v<0.2)]
   return(f)
 } )
 
 lapply(fmt,dim)
 
-```
+mt2 <- lapply(fmt, function(x) {
+  xmt <- x[grep("MT-",rownames(x)),]
+  sapply(1:ncol(x), function(j) { sum(xmt[,j])/sum(x[,j]) } )
+} )
 
-## Partitioning bystander and latent
+vioplot(mt2)
+
+boxplot(mt2,horizontal=TRUE,cex=0,col="white",las=1,
+ main="mtDNA gene proportion after filtering")
+
+```
 
 ## Save data object
 
@@ -788,4 +970,3 @@ save.image("macrophage_dataprep.Rdata")
 sessionInfo()
 
 ```
-
