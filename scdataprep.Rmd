@@ -608,6 +608,36 @@ boxplot(lgfp,col="white",cex=0,las=2,border="darkgray",ylab="log10+1 RPM",main="
 boxplot(lgfp,col="white",cex=0,las=2,border="darkgray",ylab="log10+1 RPM",main="All HIV genes")
 beeswarm(lgfp,add=TRUE,pch=1,cex=0.1)
 
+lgfp2 <- lgfp[grep("neg",names(lgfp),invert=TRUE)]
+boxplot(lgfp2,col="white",cex=0,las=2,border="darkgray",ylab="log10+1 RPM",main="All HIV genes")
+boxplot(lgfp2,col="white",cex=0,las=2,border="darkgray",ylab="log10+1 RPM",main="All HIV genes")
+beeswarm(lgfp2,add=TRUE,pch=1,cex=0.1)
+
+
+#blah()
+par(mar=c(8.1, 4.1, 4.1, 2.1))
+
+vioplot(lgfp,las=2,ylab="log10+1 RPM",main="All HIV genes")
+
+vioplot(lgfp2,las=2,ylab="log10+1 RPM",main="All HIV genes")
+
+par(mar=c(7.1, 4.1, 4.1, 2.1))
+
+# plot the median for groups
+
+vgfp <- unlist(lapply(lgfp,median))
+mm <- vgfp[grep("mdm_mock",names(vgfp))]
+ma <- vgfp[grep("mdm_active",names(vgfp))]
+am <- vgfp[grep("alv_mock",names(vgfp))]
+aa <- vgfp[grep("alv_active",names(vgfp))]
+
+bgfp <- list("MDM mock"=mm, "MDM active"=ma,
+  "Alv mock"=am,"Alv active"=aa)
+
+boxplot(bgfp)
+boxplot(bgfp,col="white",cex=0,las=0,border="darkgray",ylab="log10+1 RPM",main="All HIV genes")
+beeswarm(bgfp,add=TRUE,pch=19,cex=1)
+
 nullres <- lapply(1:21, function(i) {
 
   gfp <- list("mdm_mock1"=mdm_mock1[i,]/colSums(mdm_mock1)*1e6 ,
