@@ -1,0 +1,169 @@
+---
+title: "Single cell transcriptomes of macrophages with HIV 2024 - comparative analysis"
+author: "Burnet Bioinformatics group"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    fig_width: 13
+    fig_height: 9
+    code_folding: hide
+theme: cosmo
+---
+
+## Introduction
+
+We are interested in comparing DEGs between the mock (ctrl) and productively-infected (case).
+
+Here are the general steps:
+
+1. We will obtain the list of top pathways.
+
+2. Get the list of genes that  are driving the enrichment.
+
+3. Make a network diagram using the gs2net function I made previously
+
+4. Modify it so that the colours represent the direction of regulation, and size represents
+the FDR.
+
+```{r,libs}
+
+suppressPackageStartupMessages({
+  library("gplots")
+  library("kableExtra")
+  library("ggplot2")
+  library("network")
+  library("eulerr")
+  library("mitch")
+  library("dplyr")
+  library("reshape2")
+})
+
+knitr::opts_chunk$set(dev = 'svg') # set output device to svg
+
+```
+
+Functions.
+
+```{r,functions}
+
+map2color<-function(x,pal,limits=NULL){
+    if(is.null(limits)) limits=range(x)
+    pal[findInterval(x,seq(limits[1],limits[2],length.out=length(pal)+1), all.inside=TRUE)]
+}
+
+gs2net <- function(gset,em,colfunc=colorRampPalette(c("blue", "white","red"))(n=100)){
+  mydf <- bind_rows(lapply(gset, as.data.frame.list))
+  rownames(mydf) <- names(gset)
+  j <- apply(mydf,1,function(x) {
+    apply(mydf,1,function(y) {
+      length(intersect(x,y) ) / length(union(x,y))
+    })
+  })
+  j[lower.tri(j)] <- NA
+  j[lower.tri(j,diag=TRUE)] <- 0
+  jl <- melt(j)
+  jl <- jl[which(jl$Var1 != jl$Var2),]
+  jl <- jl[which(jl$value != 1),]
+  jl <- jl[order(-jl$value),]
+  jl <- head(jl,length(gset)*2)
+  jl$edgeSize = with(jl, jl$value/sum(jl$value))
+  lengths <- unlist(lapply(gset,length))
+  lengths <- sqrt(lengths/sum(lengths)*100)
+  jl$vertexsize <- lengths[match(as.character(jl$Var1),names(lengths))]
+  jl2 <- apply(jl[,1:2],2,as.character)
+  jlnet = network(jl2)
+  goid <- sapply(strsplit(names(gset)," "),"[[",1)
+  es <- em[which(em$GO.ID %in% goid),"ES"]
+  colours <- map2color(es,colfunc)
+  plot(jlnet, displaylabels = TRUE, label.col = "steelblue",
+       edge.lwd = c(jl$edgeSize) * 100,
+       arrowhead.cex = 0,
+       label.cex = 0.8, vertex.border = "white",vertex.cex = jl$vertexsize,
+       vertex.col = colours, edge.col = rgb(0, 0, 0, alpha = 0.5))
+}
+
+```
+
+Read in the key data.
+
+```{r,read}
+
+x <- read.table("de3af.tsv")
+
+y <- read.csv("de3af_em.tsv",sep="\t",header=TRUE,row.names=NULL)
+
+go <- gmt_import("go_2024-11.gmt")
+goids <- sapply(strsplit(names(go)," "),"[[",1)
+
+```
+
+Now analyse top gene sets.
+
+```{r,up1}
+
+scores <- x$stat
+names(scores) <- rownames(x)
+
+up <- head(subset(y,FDR<0.05 & ES > 0),20)
+
+up |> kbl(caption="Top upregulated pathways in active Alv cells compared to mock") |> kable_paper("hover", full_width = F)
+
+up_go <- up[,1]
+up_go <- go[which(goids %in% up_go)]
+
+topgs_up <- lapply(1:length(up_go),function(i) {
+  gsname <- names(up_go)[i]
+  genes <- up_go[[i]]
+  gene_scores <- scores[which(names(scores) %in% genes)]
+  top_genes <- names(which(gene_scores>2))
+  return(top_genes)
+})
+names(topgs_up) <- names(up_go)
+
+gs2net(topgs_up,y,colorRampPalette(c("pink","darkred"))(n=100))
+
+topgs_up
+
+```
+
+Now down pathways.
+
+```{r,dn1}
+
+dn <- head(subset(y,FDR<0.05 & ES < 0),20)
+
+dn |> kbl(caption="Top downregulated pathways in active Alv cells compared to mock") |> kable_paper("hover", full_width = F)
+
+dn_go <- dn[,1]
+dn_go <- go[which(goids %in% dn_go)]
+
+topgs_dn <- lapply(1:length(dn_go),function(i) {
+  gsname <- names(dn_go)[i]
+  genes <- dn_go[[i]]
+  gene_scores <- scores[which(names(scores) %in% genes)]
+  top_genes <- names(which(gene_scores< -2))
+  return(top_genes)
+})
+names(topgs_dn) <- names(dn_go)
+
+gs2net(topgs_dn,y,colorRampPalette(c("darkblue","lightblue"))(n=100))
+
+topgs_dn
+
+gset <- c(topgs_up,topgs_dn)
+
+#gs2net(gset,y,colorRampPalette(c("blue","white","red"))(n=100))
+
+```
+
+## Session information
+
+For reproducibility.
+
+```{r,session}
+
+sessionInfo()
+
+```
