@@ -544,7 +544,9 @@ plot(cmdscale(dist(t(pb1mf))), xlab="Coordinate 1", ylab="Coordinate 2",
 
 text(cmdscale(dist(t(pb1mf))), labels=colnames(pb1mf) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb1mf , colData = des1m, design = ~ case)
+des1m$sample <- rep(1:4,2)
+
+dds <- DESeqDataSetFromMatrix(countData = pb1mf , colData = des1m, design = ~ sample + case)
 
 res <- DESeq(dds)
 z <- results(res)
@@ -612,7 +614,7 @@ plot(cmdscale(dist(t(pb1af))), xlab="Coordinate 1", ylab="Coordinate 2",
 
 text(cmdscale(dist(t(pb1af))), labels=colnames(pb1af) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb1af , colData = des1a, design = ~ case)
+dds <- DESeqDataSetFromMatrix(countData = pb1af , colData = des1a, design = ~ sample + case)
 
 res <- DESeq(dds)
 z <- results(res)
@@ -706,27 +708,6 @@ plot(cmdscale(dist(t(pb2mf))), xlab="Coordinate 1", ylab="Coordinate 2",
 
 text(cmdscale(dist(t(pb2mf))), labels=colnames(pb2mf) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb2mf , colData = des2m, design = ~ case)
-
-res <- DESeq(dds)
-z <- results(res)
-vsd <- vst(dds, blind=FALSE)
-zz <- cbind(as.data.frame(z),assay(vsd))
-de <- as.data.frame(zz[order(zz$pvalue),])
-de2mf <- de
-#write.table(de2mf,"de2mf.tsv",sep="\t")
-
-nrow(subset(de2mf,padj<0.05 & log2FoldChange>0))
-nrow(subset(de2mf,padj<0.05 & log2FoldChange<0))
-
-head(subset(de2mf,log2FoldChange>0),10)[,1:6] %>%
-  kbl(caption="Top upregulated genes in latent compared to bystander (MDM unpaired)") %>%
-  kable_paper("hover", full_width = F)
-
-head(subset(de2mf,log2FoldChange<0),10)[,1:6] %>%
-  kbl(caption="Top downregulated genes in latent compared to bystander (MDM unpaired)") %>%
-  kable_paper("hover", full_width = F)
-
 des2m$sample <- rep(1:4,2)
 
 dds <- DESeqDataSetFromMatrix(countData = pb2mf , colData = des2m, design = ~ sample + case)
@@ -796,30 +777,9 @@ plot(cmdscale(dist(t(pb2af))), xlab="Coordinate 1", ylab="Coordinate 2",
 
 text(cmdscale(dist(t(pb2af))), labels=colnames(pb2af) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb2af , colData = des2a, design = ~ case)
-
-res <- DESeq(dds)
-z <- results(res)
-vsd <- vst(dds, blind=FALSE)
-zz <- cbind(as.data.frame(z),assay(vsd))
-de <- as.data.frame(zz[order(zz$pvalue),])
-de2af <- de
-#write.table(de2af,"de2af.tsv",sep="\t")
-
-nrow(subset(de2af,padj<0.05 & log2FoldChange>0))
-nrow(subset(de2af,padj<0.05 & log2FoldChange<0))
-
-head(subset(de2af, log2FoldChange>0),10)[,1:6] %>%
-  kbl(caption="Top upregulated genes in latent compared to bystander (Alv unpaired)") %>%
-  kable_paper("hover", full_width = F)
-
-head(subset(de2af, log2FoldChange<0),10)[,1:6] %>%
-  kbl(caption="Top downregulated genes in latent compared to bystander (Alv unpaired)") %>%
-  kable_paper("hover", full_width = F)
-
 des2a$sample <- rep(1:3,2)
 
-dds <- DESeqDataSetFromMatrix(countData = pb2af , colData = des2a, design = ~ case)
+dds <- DESeqDataSetFromMatrix(countData = pb2af , colData = des2a, design = ~ sample + case)
 
 res <- DESeq(dds)
 z <- results(res)
@@ -916,7 +876,9 @@ plot(cmdscale(dist(t(pb3mf))), xlab="Coordinate 1", ylab="Coordinate 2",
 
 text(cmdscale(dist(t(pb3mf))), labels=colnames(pb3mf) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb3mf , colData = des3m, design = ~ case)
+des3m$sample <- rep(1:4,2)
+
+dds <- DESeqDataSetFromMatrix(countData = pb3mf , colData = des3m, design = ~ sample + case)
 
 res <- DESeq(dds)
 z <- results(res)
@@ -982,7 +944,9 @@ plot(cmdscale(dist(t(pb3af))), xlab="Coordinate 1", ylab="Coordinate 2",
 
 text(cmdscale(dist(t(pb3af))), labels=colnames(pb3af) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb3af , colData = des3a, design = ~ case)
+des3a$sample <- rep(1:3,2)
+
+dds <- DESeqDataSetFromMatrix(countData = pb3af , colData = des3a, design = ~ sample + case)
 
 res <- DESeq(dds)
 z <- results(res)
@@ -1078,7 +1042,9 @@ plot(cmdscale(dist(t(pb4mf))), xlab="Coordinate 1", ylab="Coordinate 2",
 
 text(cmdscale(dist(t(pb4mf))), labels=colnames(pb4mf) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb4mf , colData = des4m, design = ~ case)
+des4m$sample <- rep(1:4,2)
+
+dds <- DESeqDataSetFromMatrix(countData = pb4mf , colData = des4m, design = ~ sample + case)
 
 res <- DESeq(dds)
 z <- results(res)
@@ -1146,7 +1112,9 @@ plot(cmdscale(dist(t(pb4af))), xlab="Coordinate 1", ylab="Coordinate 2",
 
 text(cmdscale(dist(t(pb4af))), labels=colnames(pb4af) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb4af , colData = des4a, design = ~ case)
+des4a$sample <- rep(1:3,2)
+
+dds <- DESeqDataSetFromMatrix(countData = pb4af , colData = des4a, design = ~ sample + case)
 
 res <- DESeq(dds)
 z <- results(res)
