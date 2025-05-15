@@ -603,7 +603,10 @@ gfp <- list("mdm_mock1"=colSums(mdm_mock1[1:21,])/colSums(mdm_mock1)*1e6 ,
 
 par(mar=c(7.1, 4.1, 4.1, 2.1))
 
+lapply(gfp,summary)
+
 lgfp <- lapply(gfp,function(x) { log10(x+1) } )
+lapply(lgfp,summary)
 boxplot(lgfp,col="white",cex=0,las=2,border="darkgray",ylab="log10+1 RPM",main="All HIV genes")
 boxplot(lgfp,col="white",cex=0,las=2,border="darkgray",ylab="log10+1 RPM",main="All HIV genes")
 beeswarm(lgfp,add=TRUE,pch=1,cex=0.1)

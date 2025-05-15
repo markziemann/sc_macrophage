@@ -588,7 +588,7 @@ go <- gmt_import("go_2024-11.gmt")
 
 ```
 
-## DE1 Latently- vs productively-infected cells (groups 3 vs 4).
+## DE1 Latent (ctrl) vs productively-infected cells (case)
 
 MDM group.
 
@@ -606,12 +606,15 @@ colSums(pb1mf)
 des1m <- as.data.frame(grepl("active",colnames(pb1mf)))
 colnames(des1m) <- "case"
 
+des1m$sample <- as.character(rep(c(1:4),2))
+
 plot(cmdscale(dist(t(pb1mf))), xlab="Coordinate 1", ylab="Coordinate 2",
   type = "p",pch=19,col="gray",cex=2)
 
 text(cmdscale(dist(t(pb1mf))), labels=colnames(pb1mf) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb1mf , colData = des1m, design = ~ case)
+#dds <- DESeqDataSetFromMatrix(countData = pb1mf , colData = des1m, design = ~ case)
+dds <- DESeqDataSetFromMatrix(countData = pb1mf , colData = des1m, design = ~ sample + case)
 
 res <- DESeq(dds)
 z <- results(res)
@@ -619,7 +622,7 @@ vsd <- vst(dds, blind=FALSE)
 zz <- cbind(as.data.frame(z),assay(vsd))
 de <- as.data.frame(zz[order(zz$pvalue),])
 de1mf <- de
-write.table(de1mf,"de1mf.tsv",sep="\t")
+write.table(de1mf,"de1mf_latent_vs_active_MDM.tsv.tsv",sep="\t")
 
 nrow(subset(de1mf,padj<0.05 & log2FoldChange>0))
 nrow(subset(de1mf,padj<0.05 & log2FoldChange<0))
@@ -642,7 +645,7 @@ mysplit <- lapply(mysplit, function(x) { x[2:length(x)] } )
 godescription <- unlist(lapply(mysplit, function(x) { paste(x,collapse=" ") } ))
 em <- data.frame(goid,godescription,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
-write.table(em,"de1mf_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+write.table(em,"de1mf_em_latent_vs_active_MDM.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
@@ -674,12 +677,15 @@ colSums(pb1af)
 des1a <- as.data.frame(grepl("active",colnames(pb1af)))
 colnames(des1a) <- "case"
 
+des1a$sample <- as.character(rep(c(1:3),2))
+
 plot(cmdscale(dist(t(pb1af))), xlab="Coordinate 1", ylab="Coordinate 2",
   type = "p",pch=19,col="gray",cex=2)
 
 text(cmdscale(dist(t(pb1af))), labels=colnames(pb1af) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb1af , colData = des1a, design = ~ case)
+#dds <- DESeqDataSetFromMatrix(countData = pb1af , colData = des1a, design = ~ case)
+dds <- DESeqDataSetFromMatrix(countData = pb1af , colData = des1a, design = ~ sample + case)
 
 res <- DESeq(dds)
 z <- results(res)
@@ -687,7 +693,7 @@ vsd <- vst(dds, blind=FALSE)
 zz <- cbind(as.data.frame(z),assay(vsd))
 de <- as.data.frame(zz[order(zz$pvalue),])
 de1af <- de
-write.table(de1af,"de1af.tsv",sep="\t")
+write.table(de1af,"de1af_latent_vs_active_ALV.tsv",sep="\t")
 
 nrow(subset(de1af,padj<0.05 & log2FoldChange>0))
 nrow(subset(de1af,padj<0.05 & log2FoldChange<0))
@@ -711,7 +717,7 @@ mysplit <- lapply(mysplit, function(x) { x[2:length(x)] } )
 godescription <- unlist(lapply(mysplit, function(x) { paste(x,collapse=" ") } ))
 em <- data.frame(goid,godescription,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
-write.table(em,"de1af_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+write.table(em,"de1af_em_latent_vs_active_ALV.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
@@ -758,10 +764,11 @@ Mitch 2D
 ```{r,de1_mm}
 
 head(mm1)
+colfunc <- colorRampPalette(c("blue", "white", "red"))
 
 mm1res <- mitch_calc(mm1,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mm1res$enrichment_result
-write.table(res,"de1_mm.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+write.table(res,"de1_mm_latent_vs_active.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 res <- subset(mm1res$enrichment_result,p.adjustMANOVA<0.05)
 
 mx <- res[1:30,c("s.Alv","s.MDM")]
@@ -785,7 +792,7 @@ mtext("DE1: latent vs productive (top discordant)")
 
 ```
 
-## DE2 Latently-infected vs bystander cells
+## DE2 Bystander (ctrl) vs Latent (case)
 
 MDM group.
 
@@ -800,34 +807,14 @@ colSums(pb2mf)
 des2m <- as.data.frame(grepl("latent",colnames(pb2mf)))
 colnames(des2m) <- "case"
 
+des2m$sample <- as.character(rep(c(1:4),2))
+
 plot(cmdscale(dist(t(pb2mf))), xlab="Coordinate 1", ylab="Coordinate 2",
   type = "p",pch=19,col="gray",cex=2)
 
 text(cmdscale(dist(t(pb2mf))), labels=colnames(pb2mf) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb2mf , colData = des2m, design = ~ case)
-
-res <- DESeq(dds)
-z <- results(res)
-vsd <- vst(dds, blind=FALSE)
-zz <- cbind(as.data.frame(z),assay(vsd))
-de <- as.data.frame(zz[order(zz$pvalue),])
-de2mf <- de
-#write.table(de2mf,"de2mf.tsv",sep="\t")
-
-nrow(subset(de2mf,padj<0.05 & log2FoldChange>0))
-nrow(subset(de2mf,padj<0.05 & log2FoldChange<0))
-
-head(subset(de2mf,log2FoldChange>0),10)[,1:6] %>%
-  kbl(caption="Top upregulated genes in latent compared to bystander (MDM unpaired)") %>%
-  kable_paper("hover", full_width = F)
-
-head(subset(de2mf,log2FoldChange<0),10)[,1:6] %>%
-  kbl(caption="Top downregulated genes in latent compared to bystander (MDM unpaired)") %>%
-  kable_paper("hover", full_width = F)
-
-des2m$sample <- rep(1:4,2)
-
+#dds <- DESeqDataSetFromMatrix(countData = pb2mf , colData = des2m, design = ~ case)
 dds <- DESeqDataSetFromMatrix(countData = pb2mf , colData = des2m, design = ~ sample + case)
 
 res <- DESeq(dds)
@@ -836,18 +823,20 @@ vsd <- vst(dds, blind=FALSE)
 zz <- cbind(as.data.frame(z),assay(vsd))
 de <- as.data.frame(zz[order(zz$pvalue),])
 de2mf <- de
-write.table(de2mf,"de2mf.tsv",sep="\t")
+write.table(de2mf,"de2mf_bystander_vs_latent_MDM.tsv",sep="\t")
 
 nrow(subset(de2mf,padj<0.05 & log2FoldChange>0))
 nrow(subset(de2mf,padj<0.05 & log2FoldChange<0))
 
 head(subset(de2mf,log2FoldChange>0),10)[,1:6] %>%
-  kbl(caption="Top upregulated genes in latent compared to bystander (MDM paired)") %>%
+  kbl(caption="Top upregulated genes in latent compared to bystander") %>%
   kable_paper("hover", full_width = F)
 
 head(subset(de2mf,log2FoldChange<0),10)[,1:6] %>%
-  kbl(caption="Top downregulated genes in latent compared to bystander (MDM paired)") %>%
+  kbl(caption="Top downregulated genes in latent compared to bystander") %>%
   kable_paper("hover", full_width = F)
+
+des2m$sample <- rep(1:4,2)
 
 m2m <- mitch_import(de,DEtype="deseq2",joinType="full")
 mres2m <- mitch_calc(m2m,genesets=go,minsetsize=5,cores=4,priority="effect")
@@ -860,7 +849,7 @@ mysplit <- lapply(mysplit, function(x) { x[2:length(x)] } )
 godescription <- unlist(lapply(mysplit, function(x) { paste(x,collapse=" ") } ))
 em <- data.frame(goid,godescription,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
-write.table(em,"de2mf_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+write.table(em,"de2mf_em_bystander_vs_latent_MDM.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
@@ -890,12 +879,15 @@ colSums(pb2af)
 des2a <- as.data.frame(grepl("latent",colnames(pb2af)))
 colnames(des2a) <- "case"
 
+des2a$sample <- as.character(rep(c(1:3),2))
+
 plot(cmdscale(dist(t(pb2af))), xlab="Coordinate 1", ylab="Coordinate 2",
   type = "p",pch=19,col="gray",cex=2)
 
 text(cmdscale(dist(t(pb2af))), labels=colnames(pb2af) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb2af , colData = des2a, design = ~ case)
+#dds <- DESeqDataSetFromMatrix(countData = pb2af , colData = des2a, design = ~ case)
+dds <- DESeqDataSetFromMatrix(countData = pb2af , colData = des2a, design = ~ sample + case)
 
 res <- DESeq(dds)
 z <- results(res)
@@ -903,41 +895,20 @@ vsd <- vst(dds, blind=FALSE)
 zz <- cbind(as.data.frame(z),assay(vsd))
 de <- as.data.frame(zz[order(zz$pvalue),])
 de2af <- de
-#write.table(de2af,"de2af.tsv",sep="\t")
+write.table(de2af,"de2af_bystander_vs_latent_ALV.tsv",sep="\t")
 
 nrow(subset(de2af,padj<0.05 & log2FoldChange>0))
 nrow(subset(de2af,padj<0.05 & log2FoldChange<0))
 
 head(subset(de2af, log2FoldChange>0),10)[,1:6] %>%
-  kbl(caption="Top upregulated genes in latent compared to bystander (Alv unpaired)") %>%
+  kbl(caption="Top upregulated genes in latent compared to bystander in Alv") %>%
   kable_paper("hover", full_width = F)
 
 head(subset(de2af, log2FoldChange<0),10)[,1:6] %>%
-  kbl(caption="Top downregulated genes in latent compared to bystander (Alv unpaired)") %>%
+  kbl(caption="Top downregulated genes in latent compared to bystander in Alv") %>%
   kable_paper("hover", full_width = F)
 
 des2a$sample <- rep(1:3,2)
-
-dds <- DESeqDataSetFromMatrix(countData = pb2af , colData = des2a, design = ~ case)
-
-res <- DESeq(dds)
-z <- results(res)
-vsd <- vst(dds, blind=FALSE)
-zz <- cbind(as.data.frame(z),assay(vsd))
-de <- as.data.frame(zz[order(zz$pvalue),])
-de2af <- de
-write.table(de2af,"de2af.tsv",sep="\t")
-
-nrow(subset(de2af,padj<0.05 & log2FoldChange>0))
-nrow(subset(de2af,padj<0.05 & log2FoldChange<0))
-
-head(subset(de2af, log2FoldChange>0),10)[,1:6] %>%
-  kbl(caption="Top upregulated genes in latent compared to bystander (Alv paired)") %>%
-  kable_paper("hover", full_width = F)
-
-head(subset(de2af, log2FoldChange<0),10)[,1:6] %>%
-  kbl(caption="Top downregulated genes in latent compared to bystander (Alv paired)") %>%
-  kable_paper("hover", full_width = F)
 
 m2a <- mitch_import(de,DEtype="deseq2",joinType="full")
 mres2a <- mitch_calc(m2a,genesets=go,minsetsize=5,cores=4,priority="effect")
@@ -950,7 +921,7 @@ mysplit <- lapply(mysplit, function(x) { x[2:length(x)] } )
 godescription <- unlist(lapply(mysplit, function(x) { paste(x,collapse=" ") } ))
 em <- data.frame(goid,godescription,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
-write.table(em,"de2af_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+write.table(em,"de2af_em_bystander_vs_latent_ALV.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
@@ -1000,7 +971,7 @@ head(mm2)
 
 mm2res <- mitch_calc(mm2,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mm2res$enrichment_result
-write.table(res,"de2_mm.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+write.table(res,"de2_mm_bystander_vs_latent.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 res <- subset(mm2res$enrichment_result,p.adjustMANOVA<0.05)
 
 mx <- res[1:30,c("s.Alv","s.MDM")]
@@ -1024,8 +995,7 @@ mtext("DE2: bystander vs latent (top discordant)")
 
 ```
 
-
-## DE3 Active vs mock
+## DE3 Mock (ctrl) vs active (case)
 
 MDM group.
 
@@ -1041,12 +1011,15 @@ colSums(pb3mf)
 des3m <- as.data.frame(grepl("active",colnames(pb3mf)))
 colnames(des3m) <- "case"
 
+des3m$sample <- as.character(rep(c(1:4),2))
+
 plot(cmdscale(dist(t(pb3mf))), xlab="Coordinate 1", ylab="Coordinate 2",
   type = "p",pch=19,col="gray",cex=2)
 
 text(cmdscale(dist(t(pb3mf))), labels=colnames(pb3mf) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb3mf , colData = des3m, design = ~ case)
+#dds <- DESeqDataSetFromMatrix(countData = pb3mf , colData = des3m, design = ~ case)
+dds <- DESeqDataSetFromMatrix(countData = pb3mf , colData = des3m, design = ~ sample + case)
 
 res <- DESeq(dds)
 z <- results(res)
@@ -1054,7 +1027,7 @@ vsd <- vst(dds, blind=FALSE)
 zz <- cbind(as.data.frame(z),assay(vsd))
 de <- as.data.frame(zz[order(zz$pvalue),])
 de3mf <- de
-write.table(de3mf,"de3mf.tsv",sep="\t")
+write.table(de3mf,"de3mf_mock_vs_active_MDM.tsv",sep="\t")
 
 nrow(subset(de3mf,padj<0.05 & log2FoldChange>0))
 nrow(subset(de3mf,padj<0.05 & log2FoldChange<0))
@@ -1078,7 +1051,7 @@ mysplit <- lapply(mysplit, function(x) { x[2:length(x)] } )
 godescription <- unlist(lapply(mysplit, function(x) { paste(x,collapse=" ") } ))
 em <- data.frame(goid,godescription,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
-write.table(em,"de3mf_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+write.table(em,"de3mf_em_mock_vs_active_MDM.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
@@ -1107,12 +1080,15 @@ colSums(pb3af)
 des3a <- as.data.frame(grepl("active",colnames(pb3af)))
 colnames(des3a) <- "case"
 
+des3a$sample <- as.character(rep(c(1:3),2))
+
 plot(cmdscale(dist(t(pb3af))), xlab="Coordinate 1", ylab="Coordinate 2",
   type = "p",pch=19,col="gray",cex=2)
 
 text(cmdscale(dist(t(pb3af))), labels=colnames(pb3af) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb3af , colData = des3a, design = ~ case)
+#dds <- DESeqDataSetFromMatrix(countData = pb3af , colData = des3a, design = ~ case)
+dds <- DESeqDataSetFromMatrix(countData = pb3af , colData = des3a, design = ~ sample + case)
 
 res <- DESeq(dds)
 z <- results(res)
@@ -1120,7 +1096,7 @@ vsd <- vst(dds, blind=FALSE)
 zz <- cbind(as.data.frame(z),assay(vsd))
 de <- as.data.frame(zz[order(zz$pvalue),])
 de3af <- de
-write.table(de3af,"de3af.tsv",sep="\t")
+write.table(de3af,"de3af_mock_vs_active_ALV.tsv",sep="\t")
 
 nrow(subset(de3af,padj<0.05 & log2FoldChange>0))
 nrow(subset(de3af,padj<0.05 & log2FoldChange<0))
@@ -1144,7 +1120,7 @@ mysplit <- lapply(mysplit, function(x) { x[2:length(x)] } )
 godescription <- unlist(lapply(mysplit, function(x) { paste(x,collapse=" ") } ))
 em <- data.frame(goid,godescription,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
-write.table(em,"de3af_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+write.table(em,"de3af_em_mock_vs_active_ALV.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
@@ -1194,7 +1170,7 @@ head(mm3)
 
 mm3res <- mitch_calc(mm3,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mm3res$enrichment_result
-write.table(res,"de3_mm.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+write.table(res,"de3_mm_mock_vs_active.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 res <- subset(mm3res$enrichment_result,p.adjustMANOVA<0.05)
 
 mx <- res[1:30,c("s.Alv","s.MDM")]
@@ -1218,7 +1194,7 @@ mtext("DE3: mock vs productive (top discordant)")
 
 ```
 
-## DE4 Mock vs bystander  
+## DE4 Mock (ctrl) vs bystander (case)
 
 MDM group.
 
@@ -1234,12 +1210,15 @@ colSums(pb4mf)
 des4m <- as.data.frame(grepl("bystander",colnames(pb4mf)))
 colnames(des4m) <- "case"
 
+des4m$sample <- as.character(rep(c(1:4),2))
+
 plot(cmdscale(dist(t(pb4mf))), xlab="Coordinate 1", ylab="Coordinate 2",
   type = "p",pch=19,col="gray",cex=2)
 
 text(cmdscale(dist(t(pb4mf))), labels=colnames(pb4mf) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb4mf , colData = des4m, design = ~ case)
+#dds <- DESeqDataSetFromMatrix(countData = pb4mf , colData = des4m, design = ~ case)
+dds <- DESeqDataSetFromMatrix(countData = pb4mf , colData = des4m, design = ~ sample + case)
 
 res <- DESeq(dds)
 z <- results(res)
@@ -1247,7 +1226,7 @@ vsd <- vst(dds, blind=FALSE)
 zz <- cbind(as.data.frame(z),assay(vsd))
 de <- as.data.frame(zz[order(zz$pvalue),])
 de4mf <- de
-write.table(de4mf,"de4mf.tsv",sep="\t")
+write.table(de4mf,"de4mf_mock_vs_bystander_MDM.tsv",sep="\t")
 
 nrow(subset(de4mf,padj<0.05 & log2FoldChange>0))
 nrow(subset(de4mf,padj<0.05 & log2FoldChange<0))
@@ -1271,7 +1250,7 @@ mysplit <- lapply(mysplit, function(x) { x[2:length(x)] } )
 godescription <- unlist(lapply(mysplit, function(x) { paste(x,collapse=" ") } ))
 em <- data.frame(goid,godescription,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
-write.table(em,"de4mf_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+write.table(em,"de4mf_em_mock_vs_bystander_MDM.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
@@ -1302,12 +1281,15 @@ colSums(pb4af)
 des4a <- as.data.frame(grepl("bystander",colnames(pb4af)))
 colnames(des4a) <- "case"
 
+des4a$sample <- as.character(rep(c(1:3),2))
+
 plot(cmdscale(dist(t(pb4af))), xlab="Coordinate 1", ylab="Coordinate 2",
   type = "p",pch=19,col="gray",cex=2)
 
 text(cmdscale(dist(t(pb4af))), labels=colnames(pb4af) )
 
-dds <- DESeqDataSetFromMatrix(countData = pb4af , colData = des4a, design = ~ case)
+#dds <- DESeqDataSetFromMatrix(countData = pb4af , colData = des4a, design = ~ case)
+dds <- DESeqDataSetFromMatrix(countData = pb4af , colData = des4a, design = ~ sample + case)
 
 res <- DESeq(dds)
 z <- results(res)
@@ -1315,7 +1297,7 @@ vsd <- vst(dds, blind=FALSE)
 zz <- cbind(as.data.frame(z),assay(vsd))
 de <- as.data.frame(zz[order(zz$pvalue),])
 de4af <- de
-write.table(de4af,"de4af.tsv",sep="\t")
+write.table(de4af,"de4af_mock_vs_bystander_ALV.tsv",sep="\t")
 
 nrow(subset(de4af,padj<0.05 & log2FoldChange>0))
 nrow(subset(de4af,padj<0.05 & log2FoldChange<0))
@@ -1339,7 +1321,7 @@ mysplit <- lapply(mysplit, function(x) { x[2:length(x)] } )
 godescription <- unlist(lapply(mysplit, function(x) { paste(x,collapse=" ") } ))
 em <- data.frame(goid,godescription,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
 colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
-write.table(em,"de4af_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+write.table(em,"de4af_em_mock_vs_bystander_ALV.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 
 res <- subset(res,p.adjustANOVA<0.05)
 resup <- subset(res,s.dist>0)
@@ -1389,7 +1371,7 @@ head(mm4)
 
 mm4res <- mitch_calc(mm4,genesets=go,minsetsize=5,cores=4,priority="effect")
 res <- mm4res$enrichment_result
-write.table(res,"de4_mm.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+write.table(res,"de4_mm_mock_vs_bystander.tsv",row.names = FALSE, quote=FALSE,sep="\t")
 res <- subset(mm4res$enrichment_result,p.adjustMANOVA<0.05)
 
 mx <- res[1:30,c("s.Alv","s.MDM")]
@@ -1441,8 +1423,7 @@ heatmap.2(as.matrix(mx),scale="none",trace="none",margins=c(6,25),
 
 ```
 
-## DE5 Mock MDM vs Mock AlvMDM
-
+## DE5 Mock MDM (ctrl) vs Mock AlvMDM (case)
 
 ```{r,mockmock}
 
