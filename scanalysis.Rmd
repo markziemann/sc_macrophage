@@ -1,3 +1,4 @@
+
 ---
 title: "Single cell transcriptomes of macrophages with HIV 2024 - comparative analysis"
 author: "Burnet Bioinformatics group"
@@ -594,6 +595,13 @@ if (! file.exists("MDM_latent_vs_active.html") ) {
 
 ```
 
+```{r,de1m_nw,fig.width=9,fig.height=6}
+
+networkplot(mres1m,FDR=0.05,n_sets=20)
+network_genes(mres1m,FDR=0.05,n_sets=20)
+
+```
+
 Alv cells.
 
 ```{r,de1alv}
@@ -662,6 +670,13 @@ barplot(abs(s),las=1,horiz=TRUE,col=cols,xlab="ES",cex.names=0.8,main="")
 if (! file.exists("Alv_latent_vs_active.html") ) {
   mitch_report(mres1a,outfile="Alv_latent_vs_active.html")
 }
+
+```
+
+```{r,de1a_nw,fig.width=9,fig.height=6}
+
+networkplot(mres1a,FDR=0.05,n_sets=20)
+network_genes(mres1a,FDR=0.05,n_sets=20)
 
 ```
 
@@ -761,6 +776,13 @@ if (! file.exists("MDM_bystander_vs_latent.html") ) {
 
 ```
 
+```{r,de2m_nw,fig.width=9,fig.height=6}
+
+networkplot(mres2m,FDR=0.05,n_sets=20)
+network_genes(mres2m,FDR=0.05,n_sets=20)
+
+```
+
 Alv cells.
 
 ```{r,de2alv}
@@ -827,6 +849,13 @@ barplot(abs(s),las=1,horiz=TRUE,col=cols,xlab="ES",cex.names=0.8,main="")
 if (! file.exists("Alv_bystander_vs_latent.html") ) {
   mitch_report(mres2a,outfile="Alv_bystander_vs_latent.html")
 }
+
+```
+
+```{r,de2a_nw,fig.width=9,fig.height=6}
+
+networkplot(mres2a,FDR=0.05,n_sets=20)
+network_genes(mres2a,FDR=0.05,n_sets=20)
 
 ```
 
@@ -929,6 +958,14 @@ if (! file.exists("MDM_mock_vs_active.html") ) {
 
 ```
 
+```{r,de3m_nw,fig.width=9,fig.height=6}
+
+networkplot(mres3m,FDR=0.05,n_sets=20)
+network_genes(mres3m,FDR=0.05,n_sets=20)
+
+```
+
+
 ```{r,de3alv}
 
 pb3a <- pbalv[,c(grep("active",colnames(pbalv)),grep("mock",colnames(pbalv)))]
@@ -997,6 +1034,13 @@ if (! file.exists("Alv_mock_vs_active.html") ) {
 
 ```
 
+```{r,de3a_nw,fig.width=9,fig.height=6}
+
+networkplot(mres3a,FDR=0.05,n_sets=20)
+network_genes(mres3a,FDR=0.05,n_sets=20)
+
+```
+
 Combined.
 
 ```{r,de3am}
@@ -1022,6 +1066,44 @@ cor.test(mm3r$Alv,mm3r$MDM)
 
 ```
 
+Mitch 2D
+
+```{r,de3_mm}
+
+head(mm3)
+
+mm3res <- mitch_calc(mm3,genesets=go,minsetsize=5,cores=4,priority="effect")
+res <- mm3res$enrichment_result
+write.table(res,"de3_mm_mock_vs_active.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+res <- subset(mm3res$enrichment_result,p.adjustMANOVA<0.05)
+
+mx <- res[1:30,c("s.Alv","s.MDM")]
+rownames(mx) <- res$set[1:30]
+colnames(mx) <- gsub("s.","",colnames(mx))
+
+heatmap.2(as.matrix(mx),scale="none",trace="none",margins=c(6,25),
+  col=colfunc(25),cexRow=0.75,cexCol=0.8)
+mtext("DE3: mock vs productive (top effect size)")
+
+mm3res <- mitch_calc(mm3,genesets=go,minsetsize=5,cores=4,priority="SD")
+res <- subset(mm3res$enrichment_result,p.adjustMANOVA<0.05)
+
+mx <- res[1:30,c("s.Alv","s.MDM")]
+rownames(mx) <- res$set[1:30]
+colnames(mx) <- gsub("s.","",colnames(mx))
+
+heatmap.2(as.matrix(mx),scale="none",trace="none",margins=c(6,25),
+  col=colfunc(25),cexRow=0.75,cexCol=0.8)
+mtext("DE3: mock vs productive (top discordant)")
+
+pdf("de3_mm_mitchheat.pdf",height=7,width=7)
+heatmap.2(as.matrix(mx),scale="none",trace="none",margins=c(6,25),
+  col=colfunc(25),cexRow=0.75,cexCol=0.8)
+mtext("DE3: mock vs productive (top discordant)")
+dev.off()
+blah()
+
+```
 
 ## DE4 Mock vs bystander  
 
@@ -1095,6 +1177,13 @@ if (! file.exists("MDM_mock_vs_bystander.html") ) {
 
 ```
 
+```{r,de4m_nw,fig.width=9,fig.height=6}
+
+networkplot(mres4m,FDR=0.05,n_sets=20)
+network_genes(mres4m,FDR=0.05,n_sets=20)
+
+```
+
 Alv cells.
 
 ```{r,de4alv}
@@ -1162,6 +1251,13 @@ barplot(abs(s),las=1,horiz=TRUE,col=cols,xlab="ES",cex.names=0.8,main="")
 if (! file.exists("Alv_mock_vs_bystander.html") ) {
   mitch_report(mres4a,outfile="Alv_mock_vs_bystander.html")
 }
+
+```
+
+```{r,de4a_nw,fig.width=9,fig.height=6}
+
+networkplot(mres4a,FDR=0.05,n_sets=20)
+network_genes(mres4a,FDR=0.05,n_sets=20)
 
 ```
 
