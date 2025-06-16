@@ -138,7 +138,7 @@ comb <- FindClusters(comb, resolution = 0.5)
 
 ## UMAP
 
-```{r,umap}
+```{r,umap, dev = "svg"}
 
 comb <- RunUMAP(comb, dims = 1:10)
 DimPlot(comb, reduction = "umap")
@@ -151,7 +151,7 @@ ADGRE1, CCR2, CD169, CX3CR1, CD206, CD163, LYVE1, CD9, TREM2
 
 HLA-DP, HLA-DM, HLA-DOA, HLA-DOB, HLA-DQ, and HLA-DR.
 
-```{r,assignclusters}
+```{r,assignclusters, dev = "svg"}
 
 message("macrophage markers")
 FeaturePlot(comb, features = c("ADGRE1", "CCR2", "SIGLEC1", "CX3CR1", "MRC1", "CD163", "LYVE1", "CD9", "TREM2"))
@@ -164,7 +164,7 @@ That's pretty useless.
 Let's use celldex pkg to annotate cells and get the macs.
 
 
-```{r,cellidents}
+```{r,cellidents, dev = "svg"}
 
 ref <- celldex::MonacoImmuneData()
 
@@ -220,7 +220,7 @@ DimPlot(comb, label=TRUE, group.by = "monaco_fine_annotation", reduction = "umap
 
 ## Make MDM object
 
-```{r,sce_mdm}
+```{r,sce_mdm, dev = "svg"}
 
 mdmlist <- mylist[grep("mdm",names(mylist))]
 comb1 <- do.call(cbind,mdmlist)
@@ -298,7 +298,7 @@ DimPlot(mono, group.by="sample" , reduction = "umap", label=TRUE)
 
 ## Make Alv object
 
-```{r,sce_alv}
+```{r,sce_alv, dev = "svg"}
 
 alvlist <- mylist[grep("alv",names(mylist))]
 
@@ -377,7 +377,7 @@ DimPlot(mono, group.by="sample" , reduction = "umap", label=TRUE)
 
 ## Extract monocytes MDM only
 
-```{r,extract}
+```{r,extract, dev = "svg"}
 
 mono <- comb[,which(meta_inf$monaco_broad_annotation == "Monocytes")]
 mono_metainf <- meta_inf[which(meta_inf$monaco_broad_annotation == "Monocytes"),]
@@ -417,7 +417,7 @@ pctcc %>% kbl(caption="cell proportions") %>% kable_paper("hover", full_width = 
 
 ## Focus on MOCK vs ACTIVE - exclude latent and bystander
 
-```{r,mockactive}
+```{r,mockactive, dev = "svg"}
 
 focus <- meta_inf[grep("latent",rownames(meta_inf),invert=TRUE),]
 focus <- focus[grep("bystander",rownames(focus),invert=TRUE),]
@@ -595,7 +595,7 @@ if (! file.exists("MDM_latent_vs_active.html") ) {
 
 ```
 
-```{r,de1m_nw,fig.width=9,fig.height=6}
+```{r,de1m_nw,fig.width=9,fig.height=6, dev="svg"}
 
 networkplot(mres1m,FDR=0.05,n_sets=20)
 network_genes(mres1m,FDR=0.05,n_sets=20)
@@ -673,7 +673,7 @@ if (! file.exists("Alv_latent_vs_active.html") ) {
 
 ```
 
-```{r,de1a_nw,fig.width=9,fig.height=6}
+```{r,de1a_nw,fig.width=9,fig.height=6, dev="svg"}
 
 networkplot(mres1a,FDR=0.05,n_sets=20)
 network_genes(mres1a,FDR=0.05,n_sets=20)
@@ -776,7 +776,7 @@ if (! file.exists("MDM_bystander_vs_latent.html") ) {
 
 ```
 
-```{r,de2m_nw,fig.width=9,fig.height=6}
+```{r,de2m_nw,fig.width=9,fig.height=6, dev="svg"}
 
 networkplot(mres2m,FDR=0.05,n_sets=20)
 network_genes(mres2m,FDR=0.05,n_sets=20)
@@ -852,7 +852,7 @@ if (! file.exists("Alv_bystander_vs_latent.html") ) {
 
 ```
 
-```{r,de2a_nw,fig.width=9,fig.height=6}
+```{r,de2a_nw,fig.width=9,fig.height=6,dev="svg"}
 
 networkplot(mres2a,FDR=0.05,n_sets=20)
 network_genes(mres2a,FDR=0.05,n_sets=20)
@@ -958,7 +958,7 @@ if (! file.exists("MDM_mock_vs_active.html") ) {
 
 ```
 
-```{r,de3m_nw,fig.width=9,fig.height=6}
+```{r,de3m_nw,fig.width=9,fig.height=6,dev="svg"}
 
 networkplot(mres3m,FDR=0.05,n_sets=20)
 network_genes(mres3m,FDR=0.05,n_sets=20)
@@ -1034,7 +1034,7 @@ if (! file.exists("Alv_mock_vs_active.html") ) {
 
 ```
 
-```{r,de3a_nw,fig.width=9,fig.height=6}
+```{r,de3a_nw,fig.width=9,fig.height=6,dev="svg"}
 
 networkplot(mres3a,FDR=0.05,n_sets=20)
 network_genes(mres3a,FDR=0.05,n_sets=20)
@@ -1101,7 +1101,7 @@ heatmap.2(as.matrix(mx),scale="none",trace="none",margins=c(6,25),
   col=colfunc(25),cexRow=0.75,cexCol=0.8)
 mtext("DE3: mock vs productive (top discordant)")
 dev.off()
-blah()
+#blah()
 
 ```
 
@@ -1177,7 +1177,7 @@ if (! file.exists("MDM_mock_vs_bystander.html") ) {
 
 ```
 
-```{r,de4m_nw,fig.width=9,fig.height=6}
+```{r,de4m_nw,fig.width=9,fig.height=6,dev="svg"}
 
 networkplot(mres4m,FDR=0.05,n_sets=20)
 network_genes(mres4m,FDR=0.05,n_sets=20)
