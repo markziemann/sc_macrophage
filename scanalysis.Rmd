@@ -1081,6 +1081,8 @@ mx <- res[1:30,c("s.Alv","s.MDM")]
 rownames(mx) <- res$set[1:30]
 colnames(mx) <- gsub("s.","",colnames(mx))
 
+colfunc <- colorRampPalette(c("blue", "white", "red"))
+
 heatmap.2(as.matrix(mx),scale="none",trace="none",margins=c(6,25),
   col=colfunc(25),cexRow=0.75,cexCol=0.8)
 mtext("DE3: mock vs productive (top effect size)")
@@ -1254,7 +1256,7 @@ if (! file.exists("Alv_mock_vs_bystander.html") ) {
 
 ```
 
-```{r,de4a_nw,fig.width=9,fig.height=6}
+```{r,de4a_nw,fig.width=9,fig.height=6,dev="svg"}
 
 networkplot(mres4a,FDR=0.05,n_sets=20)
 network_genes(mres4a,FDR=0.05,n_sets=20)

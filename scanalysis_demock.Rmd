@@ -1,0 +1,462 @@
+---
+title: "Single cell transcriptomes of macrophages with HIV 2024 - comparative analysis"
+author: "Burnet Bioinformatics group"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 7
+theme: cosmo
+---
+
+## Introduction
+
+Ee are interested in comparing DEGs between the following comparison groups:
+
+* Latently- vs productively-infected cells (groups 3 vs 4).
+
+* Latently-infected vs bystander cells (2 vs 3).
+
+* Productively-infected vs mock (4 vs 1)
+
+* Mock vs bystander (1 vs 2).
+
+As discussed, I think we will do these comparisons separately for both MDM and AlvMDM samples initially.
+Then, it would be of interest to compare DEGs for MDM vs AlvMDM for each of the four infection groups.
+
+```{r,libs}
+
+suppressPackageStartupMessages({
+  library("kableExtra")
+  library("ggplot2")
+  library("plyr")
+  library("Seurat")
+  library("hdf5r")
+  library("SingleCellExperiment")
+  library("parallel")
+  library("stringi")
+  library("beeswarm")
+  library("muscat")
+  library("DESeq2")
+  library("mitch")
+  library("harmony")
+  library("celldex")
+  library("SingleR")
+  library("limma")
+  library("gplots")
+})
+
+```
+
+## Load data
+
+| Sample | Patient | Group |
+| --- | --- | --- |
+| mock0 | MDMP236 | mock |
+| mock1 | MDMV236 | mock |
+| mock2 | MDMO236 | mock |
+| mock3 | MDMP239 | mock |
+| mock4 | AlvP239 | mock |
+| mock5 | AlvM239 | mock |
+| mock6 | AlvN239 | mock |
+| active0 | MDMP236 | active |
+| active1 | MDMV236 | active |
+| active2 | MDMO236 | active |
+| active3 | MDMP239 | active |
+| active4 | AlvP239 | active |
+| active5 | AlvM239 | active |
+| active6 | AlvN239 | active |
+| latent0 | MDMP236 | latent |
+| latent1 | MDMV236 | latent |
+| latent2 | MDMO236 | latent |
+| latent3 | MDMP239 | latent |
+| latent4 | AlvP239 | latent |
+| latent5 | AlvM239 | latent |
+| latent6 | AlvN239 | latent |
+| bystander0 | MDMP236 | bystander |
+| bystander1 | MDMV236 | bystander |
+| bystander2 | MDMO236 | bystander |
+| bystander3 | MDMP239 | bystander |
+| bystander4 | AlvP239 | bystander |
+| bystander5 | AlvM239 | bystander |
+| bystander6 | AlvN239 | bystander |
+| react6 | AlvN239 | reactivated |
+
+exclude react6
+
+```{r,load}
+
+ss <- read.table("samplesheet.tsv",header=TRUE,row.names=1)
+
+ss %>% kbl(caption="sample sheet") %>% kable_paper("hover", full_width = F)
+
+mylist <- readRDS("macrophage_counts.rds")
+
+```
+
+## Make single cell experiment object
+
+```{r,sce1}
+
+comb <- do.call(cbind,mylist)
+sce <- SingleCellExperiment(list(counts=comb))
+sce
+
+```
+
+## Normalise data
+
+```{r,norm1}
+
+cellmetadata <- data.frame(colnames(comb) ,sapply(strsplit(colnames(comb),"\\|"),"[[",1))
+colnames(cellmetadata) <- c("cell","sample")
+comb <- CreateSeuratObject(comb, project = "mac", assay = "RNA", meta.data = cellmetadata)
+comb <- NormalizeData(comb)
+comb <- FindVariableFeatures(comb, selection.method = "vst", nfeatures = 2000)
+comb <- ScaleData(comb)
+
+```
+
+## PCA and Cluster
+
+```{r,pca1}
+
+comb <- RunPCA(comb, features = VariableFeatures(object = comb))
+comb <- RunHarmony(comb,"sample")
+
+DimHeatmap(comb, dims = 1:6, cells = 500, balanced = TRUE)
+
+ElbowPlot(comb)
+comb <- JackStraw(comb, num.replicate = 100)
+comb <- FindNeighbors(comb, dims = 1:10)
+comb <- FindClusters(comb, resolution = 0.5)
+
+```
+
+## UMAP
+
+```{r,umap}
+
+comb <- RunUMAP(comb, dims = 1:10)
+DimPlot(comb, reduction = "umap")
+
+```
+
+## Assign names to clusters
+
+ADGRE1, CCR2, CD169, CX3CR1, CD206, CD163, LYVE1, CD9, TREM2
+
+HLA-DP, HLA-DM, HLA-DOA, HLA-DOB, HLA-DQ, and HLA-DR.
+
+```{r,assignclusters}
+
+message("macrophage markers")
+FeaturePlot(comb, features = c("ADGRE1", "CCR2", "SIGLEC1", "CX3CR1", "MRC1", "CD163", "LYVE1", "CD9", "TREM2"))
+
+DimPlot(comb, reduction = "umap", label = TRUE, pt.size = 0.5) + NoLegend()
+
+```
+
+That's pretty useless.
+Let's use celldex pkg to annotate cells and get the macs.
+
+
+```{r,cellidents}
+
+ref <- celldex::MonacoImmuneData()
+
+DefaultAssay(comb) <- "RNA"
+comb2 <- as.SingleCellExperiment(comb)
+
+lc <- logcounts(comb2)
+
+pred_imm_broad <- SingleR(test=comb2, ref=ref,
+                          labels=ref$label.main)
+
+head(pred_imm_broad)
+table(pred_imm_broad$pruned.labels)
+
+cellmetadata$label <- pred_imm_broad$pruned.labels
+
+pred_imm_fine <- SingleR(test=comb2, ref=ref,
+                          labels=ref$label.fine)
+head(pred_imm_fine)
+table(pred_imm_fine$pruned.labels)
+
+cellmetadata$finelabel <- pred_imm_fine$pruned.labels
+
+col_pal <- c('#e31a1c', '#ff7f00', "#999900", '#cc00ff', '#1f78b4', '#fdbf6f',
+             '#33a02c', '#fb9a99', "#a6cee3", "#cc6699", "#b2df8a", "#99004d", "#66ff99",
+             "#669999", "#006600", "#9966ff", "#cc9900", "#e6ccff", "#3399ff", "#ff66cc",
+             "#ffcc66", "#003399")
+
+annot_df <- data.frame(
+  barcodes = rownames(pred_imm_broad),
+  monaco_broad_annotation = pred_imm_broad$labels,
+  monaco_broad_pruned_labels = pred_imm_broad$pruned.labels,
+  monaco_fine_annotation = pred_imm_fine$labels,
+  monaco_fine_pruned_labels = pred_imm_fine$pruned.labels
+)
+
+meta_inf <- comb@meta.data
+meta_inf$cell_barcode <- colnames(comb)
+
+meta_inf <- meta_inf %>% dplyr::left_join(y = annot_df,
+                                          by = c("cell_barcode" = "barcodes"))
+rownames(meta_inf) <- colnames(lc)
+
+comb@meta.data <- meta_inf
+
+DimPlot(comb, label=TRUE, group.by = "monaco_broad_annotation", reduction = "umap",
+  cols = col_pal, pt.size = 0.5) + ggtitle("Annotation With the Monaco Reference Database")
+
+DimPlot(comb, label=TRUE, group.by = "monaco_fine_annotation", reduction = "umap",
+  cols = col_pal, pt.size = 0.5) + ggtitle("Annotation With the Monaco Reference Database")
+
+```
+
+## Make mock only object with mono only
+
+```{r,sce_mock,dev="svg"}
+
+mocklist <- mylist[grep("mock",names(mylist))]
+comb1 <- do.call(cbind,mocklist)
+sce1 <- SingleCellExperiment(list(counts=comb1))
+sce1
+cellmetadata1 <- data.frame(colnames(comb1) ,sapply(strsplit(colnames(comb1),"\\|"),"[[",1))
+colnames(cellmetadata1) <- c("cell","sample")
+comb1 <- CreateSeuratObject(comb1, project = "mac", assay = "RNA", meta.data = cellmetadata1)
+comb1 <- NormalizeData(comb1)
+comb1 <- FindVariableFeatures(comb1, selection.method = "vst", nfeatures = 2000)
+comb1 <- ScaleData(comb1)
+comb1 <- RunPCA(comb1, features = VariableFeatures(object = comb1))
+comb1 <- RunHarmony(comb1,"sample")
+DimHeatmap(comb1, dims = 1:6, cells = 500, balanced = TRUE)
+ElbowPlot(comb1)
+comb1 <- JackStraw(comb1, num.replicate = 100)
+comb1 <- FindNeighbors(comb1, dims = 1:10)
+comb1 <- FindClusters(comb1, resolution = 0.5)
+comb1 <- RunUMAP(comb1, dims = 1:10)
+DimPlot(comb1, reduction = "umap")
+message("macrophage markers")
+FeaturePlot(comb1, features = c("ADGRE1", "CCR2", "SIGLEC1", "CX3CR1", "MRC1", "CD163", "LYVE1", "CD9", "TREM2"))
+DimPlot(comb1, reduction = "umap", label = TRUE, pt.size = 0.5) + NoLegend()
+ref <- celldex::MonacoImmuneData()
+DefaultAssay(comb1) <- "RNA"
+comb21 <- as.SingleCellExperiment(comb1)
+lc1 <- logcounts(comb21)
+pred_imm_broad1 <- SingleR(test=comb21, ref=ref,labels=ref$label.main)
+head(pred_imm_broad1)
+table(pred_imm_broad1$pruned.labels)
+cellmetadata1$label <- pred_imm_broad1$pruned.labels
+pred_imm_fine1 <- SingleR(test=comb21, ref=ref, labels=ref$label.fine)
+head(pred_imm_fine1)
+table(pred_imm_fine1$pruned.labels)
+cellmetadata1$finelabel <- pred_imm_fine1$pruned.labels
+col_pal <- c('#e31a1c', '#ff7f00', "#999900", '#cc00ff', '#1f78b4', '#fdbf6f',
+             '#33a02c', '#fb9a99', "#a6cee3", "#cc6699", "#b2df8a", "#99004d", "#66ff99",
+             "#669999", "#006600", "#9966ff", "#cc9900", "#e6ccff", "#3399ff", "#ff66cc",
+             "#ffcc66", "#003399")
+annot_df1 <- data.frame(
+  barcodes = rownames(pred_imm_broad1),
+  monaco_broad_annotation = pred_imm_broad1$labels,
+  monaco_broad_pruned_labels = pred_imm_broad1$pruned.labels,
+  monaco_fine_annotation = pred_imm_fine1$labels,
+  monaco_fine_pruned_labels = pred_imm_fine1$pruned.labels)
+
+meta_inf1 <- comb1@meta.data
+meta_inf1$cell_barcode <- colnames(comb1)
+meta_inf1 <- meta_inf1 %>% dplyr::left_join(y = annot_df1, by = c("cell_barcode" = "barcodes"))
+rownames(meta_inf1) <- colnames(lc1)
+comb1@meta.data <- meta_inf1
+DimPlot(comb1, label=TRUE, group.by = "monaco_broad_annotation", reduction = "umap",
+  cols = col_pal, pt.size = 0.5) + ggtitle("Annotation With the Monaco Reference Database")
+DimPlot(comb1, label=TRUE, group.by = "monaco_fine_annotation", reduction = "umap",
+  cols = col_pal, pt.size = 0.5) + ggtitle("Annotation With the Monaco Reference Database")
+
+message("extract mono")
+mono <- comb1[,which(meta_inf1$monaco_broad_annotation == "Monocytes")]
+mono_metainf1 <- meta_inf1[which(meta_inf1$monaco_broad_annotation == "Monocytes"),]
+mono_metainf1 <- mono_metainf1[grep("monocytes",mono_metainf1$monaco_fine_pruned_labels),]
+mono <- mono[,which(colnames(mono) %in% rownames(mono_metainf1))]
+mono <- FindVariableFeatures(mono, selection.method = "vst", nfeatures = 2000)
+mono <- RunPCA(mono, features = VariableFeatures(object = mono))
+DimHeatmap(mono, dims = 1:2, cells = 500, balanced = TRUE)
+DimHeatmap(mono, dims = 3:4, cells = 500, balanced = TRUE)
+ElbowPlot(mono)
+mono <- FindNeighbors(mono, dims = 1:4)
+mono <- FindClusters(mono, algorithm = 3, resolution = 0.3, verbose = FALSE)
+mono <- RunUMAP(mono, dims = 1:4)
+DimPlot(mono, reduction = "umap", label=TRUE)
+DimPlot(mono, group.by="monaco_fine_annotation" , reduction = "umap", label=TRUE)
+DimPlot(mono, group.by="sample" , reduction = "umap", label=TRUE)
+
+```
+
+## Cell counts
+
+Most cells are classified as monocytes.
+
+```{r,count1}
+
+cc <- table(meta_inf1[,c("sample","monaco_broad_annotation")])
+
+cc %>% kbl(caption="cell counts") %>% kable_paper("hover", full_width = F)
+
+tcc <- t(cc)
+
+pctcc <- apply(tcc,2,function(x) { x/sum(x)*100} )
+
+pctcc %>% kbl(caption="cell proportions") %>% kable_paper("hover", full_width = F)
+
+```
+
+## Differential expression
+
+We are going to use muscat for pseudobulk analysis.
+First need to convert seurat obj to singlecellexperiment object.
+Then summarise counts to pseudobulk level.
+
+```{r,pb}
+
+sce <- Seurat::as.SingleCellExperiment(comb1, assay = "RNA")
+
+head(colData(sce),2)
+
+colnames(colData(sce))
+
+#muscat library
+pb <- aggregateData(sce,
+    assay = "counts", fun = "sum",
+    by = c("sample"))
+
+# one sheet per subpopulation
+assayNames(pb)
+
+head(assay(pb))
+
+plotMDS(assay(pb), main="Monocytes" )
+
+```
+
+## DE Prep
+
+```{r,prep1}
+
+pb <- assay(pb)
+
+head(pb)
+
+hiv <- pb[1:21,]
+pb <- pb[22:nrow(pb),]
+
+```
+
+## Gene sets
+
+Gene ontology.
+
+```{r,go1}
+
+#go <- gmt_import("c5.go.v2023.2.Hs.symbols.gmt")
+#names(go) <- gsub("_"," ",names(go))
+
+#wget https://ziemann-lab.net/public/tmp/go_2024-11.gmt
+go <- gmt_import("go_2024-11.gmt")
+
+
+```
+
+## DE Mock
+
+Compare MDM mock vs Alv mock.
+
+## DE5 Mock MDM (ctrl) vs Mock AlvMDM (case)
+
+```{r,mockmock}
+
+head(pb)
+
+mock <- pb
+
+mockf <- mock[which(rowMeans(mock)>=10),]
+head(mockf)
+colSums(mockf)
+
+desmock <- as.data.frame(grepl("alv",colnames(mockf)))
+colnames(desmock) <- "case"
+
+plot(cmdscale(dist(t(mockf))), xlab="Coordinate 1", ylab="Coordinate 2",
+  type = "p",pch=19,col="gray",cex=2)
+
+text(cmdscale(dist(t(mockf))), labels=colnames(mockf) )
+
+dds <- DESeqDataSetFromMatrix(countData = mockf , colData = desmock, design = ~ case)
+
+res <- DESeq(dds)
+z <- results(res)
+vsd <- vst(dds, blind=FALSE)
+zz <- cbind(as.data.frame(z),assay(vsd))
+de <- as.data.frame(zz[order(zz$pvalue),])
+demock <- de
+write.table(demock,"demockf.tsv",sep="\t")
+
+nrow(subset(demock,padj<0.05 & log2FoldChange>0))
+nrow(subset(demock,padj<0.05 & log2FoldChange<0))
+
+head(subset(demock,padj<0.05 & log2FoldChange>0),10)[,1:6] %>%
+  kbl(caption="Top upregulated genes in Alv cells compared to MDM") %>%
+  kable_paper("hover", full_width = F)
+
+head(subset(demock, log2FoldChange<0),10)[,1:6] %>%
+  kbl(caption="Top downregulated genes in Alv cells compared to MDM") %>%
+  kable_paper("hover", full_width = F)
+
+demockm <- mitch_import(de,DEtype="deseq2",joinType="full")
+mresmock <- mitch_calc(demockm,genesets=go,minsetsize=5,cores=4,priority="effect")
+res <- mresmock$enrichment_result
+
+mitchtbl <- mresmock$enrichment_result
+goid <- sapply(strsplit(mitchtbl$set," "),"[[",1)
+mysplit <- strsplit(mitchtbl$set," ")
+mysplit <- lapply(mysplit, function(x) { x[2:length(x)] } )
+godescription <- unlist(lapply(mysplit, function(x) { paste(x,collapse=" ") } ))
+em <- data.frame(goid,godescription,mitchtbl$pANOVA,mitchtbl$p.adjustANOVA,sign(mitchtbl$s.dist),mitchtbl$s.dist)
+colnames(em) <- c("GO.ID","Description","p.Val","FDR","Phenotype","ES")
+write.table(em,"demock_em.tsv",row.names = FALSE, quote=FALSE,sep="\t")
+
+res <- subset(res,p.adjustANOVA<0.05)
+resup <- subset(res,s.dist>0)
+resdn <- subset(res,s.dist<0)
+s <- c(head(resup$s.dist,10), head(resdn$s.dist,10))
+names(s) <- c(head(resup$set,10),head(resdn$set,10))
+s <- s[order(s)]
+cols <- gsub("1","red",gsub("-1","blue",as.character(sign(s))))
+par(mar=c(5,27,3,1))
+barplot(abs(s),las=1,horiz=TRUE,col=cols,xlab="ES",cex.names=0.8,main="")
+if (! file.exists("mock_Mdm_vs_Alv.html") ) {
+  mitch_report(mresmock,outfile="mock_Mdm_vs_Alv.html")
+}
+
+```
+
+```{r,demock_nw,fig.width=9,fig.height=5,dev="svg"}
+
+networkplot(mresmock,FDR=0.05,n_sets=20)
+network_genes(mresmock,FDR=0.05,n_sets=20)
+
+```
+
+## Session information
+
+For reproducibility.
+
+```{r,session}
+
+save.image("scanalysis_demock.Rdata")
+
+sessionInfo()
+
+```
